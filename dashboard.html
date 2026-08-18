@@ -17,22 +17,25 @@
     .table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
     /* ==========================================
-       โหมดจัดหน้าพิเศษ สำหรับบีบข้อมูลลง 1 หน้า PDF 
+       โหมดจัดหน้าพิเศษ สำหรับ PDF (PDF Mode)
        ========================================== */
     body.pdf-mode { background: white; }
-    .pdf-mode #mainContent { padding: 0 !important; }
-    .pdf-mode .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem !important; }
-    .pdf-mode .card { padding: 0.75rem !important; box-shadow: none !important; border: 1px solid #e2e8f0 !important; border-radius: 0.5rem !important; }
-    .pdf-mode .section-title { font-size: 1rem !important; margin-bottom: 0.25rem !important; padding-left: 0.5rem !important; }
-    .pdf-mode .text-4xl { font-size: 1.5rem !important; line-height: 1.5rem !important; }
-    .pdf-mode #txtPercent { font-size: 1.8rem !important; }
-    .pdf-mode .w-16.h-16 { width: 2.5rem !important; height: 2.5rem !important; }
-    .pdf-mode .chart-container { height: 160px !important; min-width: 100% !important; }
-    .pdf-mode .gap-6 { gap: 0.5rem !important; }
-    .pdf-mode .gap-4 { gap: 0.5rem !important; }
-    .pdf-mode table { font-size: 0.75rem !important; }
-    .pdf-mode th, .pdf-mode td { padding: 0.35rem !important; }
-    .pdf-page-break { page-break-before: always; margin-top: 1rem; }
+    .pdf-mode #mainContent { 
+      padding: 0 !important; 
+      width: 1120px !important; /* ล็อกความกว้างให้พอดี A4 แนวนอน */
+      max-width: 1120px !important; 
+      margin: 0 auto !important; 
+    }
+    .pdf-mode .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem !important; }
+    .pdf-mode .card { padding: 1rem !important; box-shadow: none !important; border: 1px solid #e2e8f0 !important; border-radius: 0.5rem !important; }
+    .pdf-mode .section-title { font-size: 1.1rem !important; margin-bottom: 0.5rem !important; padding-left: 0.5rem !important; }
+    .pdf-mode .text-4xl { font-size: 1.75rem !important; line-height: 2rem !important; }
+    .pdf-mode #txtPercent { font-size: 2.5rem !important; }
+    .pdf-mode .w-16.h-16 { width: 3.5rem !important; height: 3.5rem !important; }
+    .pdf-mode .chart-container { height: 180px !important; min-width: 100% !important; }
+    .pdf-mode table { font-size: 0.8rem !important; }
+    .pdf-mode th, .pdf-mode td { padding: 0.4rem !important; }
+    .pdf-page-break { page-break-before: always; margin-top: 1.5rem; }
   </style>
   
   <script>
@@ -56,7 +59,6 @@
         <button onclick="loadDashboard()" class="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow flex justify-center items-center gap-2">
           🔄 รีเฟรชข้อมูล
         </button>
-        <!-- ปุ่มโหลด PDF แบบ 1 Click -->
         <button onclick="exportToPDF()" id="btnPdf" class="flex-1 md:flex-none bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow flex justify-center items-center gap-2 font-medium">
           📥 ส่งออกเป็น PDF
         </button>
@@ -260,7 +262,12 @@
       charts[canvasId] = new Chart(document.getElementById(canvasId), {
         type: 'doughnut',
         data: { datasets: [{ data: dataValues, backgroundColor: colors, borderWidth: 0 }] },
-        options: { cutout: '75%', plugins: { tooltip: { enabled: false }, legend: { display: false } }, maintainAspectRatio: false }
+        options: { 
+          animation: false, // ปิด Animation ป้องกันกราฟหายตอนพิมพ์ PDF
+          cutout: '75%', 
+          plugins: { tooltip: { enabled: false }, legend: { display: false } }, 
+          maintainAspectRatio: false 
+        }
       });
     }
 
@@ -318,7 +325,9 @@
           ]
         },
         options: { 
-          responsive: true, maintainAspectRatio: false,
+          animation: false, // ปิด Animation ป้องกันกราฟกลายเป็นสีแดงก้อนเดียวตอนพิมพ์ PDF
+          responsive: true, 
+          maintainAspectRatio: false,
           scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } } },
           plugins: { tooltip: { callbacks: { title: (ctx) => courseNames[ctx[0].dataIndex] } } } 
         }
@@ -377,41 +386,50 @@
       const btn = document.getElementById('btnPdf');
       btn.innerHTML = '⏳ กำลังประมวลผล...';
       
-      // 1. เปิดโหมด .pdf-mode เพื่อบีบย่อช่องว่างต่างๆ ให้เล็กและชิดกัน
+      // 1. เปิดโหมดจัดหน้า PDF 
       document.body.classList.add('pdf-mode');
+      const mainContent = document.getElementById('mainContent');
       
       // 2. ปลดล็อกตาราง และซ่อนสิ่งที่ไม่อยากให้เห็น
-      const table1 = document.getElementById('scrollTable1');
-      const table2 = document.getElementById('scrollTable2');
-      table1.style.maxHeight = 'none';
-      table2.style.maxHeight = 'none';
+      const tableContainers = document.querySelectorAll('.table-container');
+      tableContainers.forEach(t => {
+        t.style.maxHeight = 'none';
+        t.style.overflow = 'visible'; // ปลด overflow ป้องกันขอบตารางขาด
+      });
       document.getElementById('filterSection').style.display = 'none';
-      
-      // 3. เปิดใช้ตัวตัดหน้าก่อนขึ้นรายชื่อ
       document.getElementById('pb4').classList.remove('hidden');
 
-      const element = document.getElementById('mainContent');
+      // รอให้ Browser วาดกราฟและจัดหน้าจอให้เสร็จ (0.5 วินาที) ถึงค่อยถ่ายรูป
+      setTimeout(() => {
+        const opt = {
+          margin:       [0.3, 0.3, 0.3, 0.3],
+          filename:     'รายงานสรุปผล_กกท.pdf',
+          image:        { type: 'jpeg', quality: 1 }, 
+          html2canvas:  { 
+            scale: 2, 
+            useCORS: true, 
+            scrollY: 0,
+            windowWidth: 1200 // ล็อกความกว้างของหน้าจอถ่ายภาพ
+          },
+          jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }, 
+          pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr'] } 
+        };
 
-      // ตั้งค่า PDF A4 แนวนอน
-      const opt = {
-        margin:       [0.3, 0.3, 0.3, 0.3], // ขอบกระดาษ 0.3 นิ้ว
-        filename:     'รายงานสรุปผล_กกท.pdf',
-        image:        { type: 'jpeg', quality: 0.98 }, 
-        html2canvas:  { scale: 2, useCORS: true, windowWidth: 1400 }, // ให้มุมมองกว้างเพื่อบีบเนื้อหาแนวตั้ง
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }, 
-        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr'] } // ห้ามตัดครึ่งบรรทัดตาราง
-      };
-
-      // เริ่มประมวลผล PDF
-      html2pdf().set(opt).from(element).save().then(() => {
-        // 4. เมื่อโหลดเสร็จ คืนค่าทุกอย่างกลับเป็นปกติ (ปิด pdf-mode)
-        document.body.classList.remove('pdf-mode');
-        table1.style.maxHeight = '250px';
-        table2.style.maxHeight = '400px';
-        document.getElementById('filterSection').style.display = 'block';
-        document.getElementById('pb4').classList.add('hidden');
-        btn.innerHTML = '📥 ส่งออกเป็น PDF';
-      });
+        // เริ่มประมวลผล PDF
+        html2pdf().set(opt).from(mainContent).save().then(() => {
+          // 4. เมื่อโหลดเสร็จ คืนค่าทุกอย่างกลับเป็นปกติ
+          document.body.classList.remove('pdf-mode');
+          
+          document.getElementById('scrollTable1').style.maxHeight = '250px';
+          document.getElementById('scrollTable1').style.overflow = 'auto';
+          document.getElementById('scrollTable2').style.maxHeight = '400px';
+          document.getElementById('scrollTable2').style.overflow = 'auto';
+          
+          document.getElementById('filterSection').style.display = 'block';
+          document.getElementById('pb4').classList.add('hidden');
+          btn.innerHTML = '📥 ส่งออกเป็น PDF';
+        });
+      }, 500); // ระยะเวลาดีเลย์ 0.5 วิ
     }
 
     window.onload = loadDashboard;
