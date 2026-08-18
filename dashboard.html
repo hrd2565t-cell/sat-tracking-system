@@ -16,16 +16,9 @@
     .table-container::-webkit-scrollbar { width: 6px; height: 6px; }
     .table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-    /* ==========================================
-       โหมดจัดหน้าพิเศษ สำหรับ PDF (PDF Mode)
-       ========================================== */
+    /* โหมดจัดหน้าพิเศษ สำหรับ PDF */
     body.pdf-mode { background: white; }
-    .pdf-mode #mainContent { 
-      padding: 0 !important; 
-      width: 1120px !important; /* ล็อกความกว้างให้พอดี A4 แนวนอน */
-      max-width: 1120px !important; 
-      margin: 0 auto !important; 
-    }
+    .pdf-mode #mainContent { padding: 0 !important; margin: 0 auto !important; }
     .pdf-mode .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem !important; }
     .pdf-mode .card { padding: 1rem !important; box-shadow: none !important; border: 1px solid #e2e8f0 !important; border-radius: 0.5rem !important; }
     .pdf-mode .section-title { font-size: 1.1rem !important; margin-bottom: 0.5rem !important; padding-left: 0.5rem !important; }
@@ -59,7 +52,8 @@
         <button onclick="loadDashboard()" class="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow flex justify-center items-center gap-2">
           🔄 รีเฟรชข้อมูล
         </button>
-        <button onclick="exportToPDF()" id="btnPdf" class="flex-1 md:flex-none bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow flex justify-center items-center gap-2 font-medium">
+        <!-- เปิดหน้าต่างตั้งค่า Grid PDF -->
+        <button onclick="openPdfModal()" class="flex-1 md:flex-none bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow flex justify-center items-center gap-2 font-medium">
           📥 ส่งออกเป็น PDF
         </button>
       </div>
@@ -74,25 +68,22 @@
     <!-- กล่องหลักสำหรับทำ PDF -->
     <div id="mainContent" class="hidden bg-slate-50 p-6 rounded-xl">
       
-      <!-- [PDF หน้าที่ 1 : ข้อ 1-3] -->
       <div class="space-y-8" id="pdfPage1">
         
         <!-- PART 1: ภาพรวม -->
         <section>
           <h2 class="section-title">1. ภาพรวมการรายงานผล (Overview)</h2>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <!-- กำหนด ID เพื่อให้ JS เปลี่ยนคลาส Grid ได้ -->
+          <div id="gridPart1" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="card border-b-4 border-blue-500 relative">
-              <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-50 rounded-full z-0 opacity-50"></div>
               <p class="text-sm text-gray-500 mb-1 relative z-10">เป้าหมายทั้งหมด</p>
               <h3 class="text-4xl font-bold text-gray-800 relative z-10" id="txtTotal">0</h3>
             </div>
             <div class="card border-b-4 border-green-500 relative">
-              <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-green-50 rounded-full z-0 opacity-50"></div>
               <p class="text-sm text-gray-500 mb-1 relative z-10">ตอบกลับมาแล้ว</p>
               <h3 class="text-4xl font-bold text-green-600 relative z-10" id="txtSubmitted">0</h3>
             </div>
             <div class="card border-b-4 border-red-500 relative">
-              <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-red-50 rounded-full z-0 opacity-50"></div>
               <p class="text-sm text-gray-500 mb-1 relative z-10">รอการตอบกลับ</p>
               <h3 class="text-4xl font-bold text-red-500 relative z-10" id="txtPending">0</h3>
             </div>
@@ -108,16 +99,16 @@
         <!-- PART 2: สรุปผลรายหลักสูตร -->
         <section>
           <h2 class="section-title">2. สรุปผลเป็นรายหลักสูตร</h2>
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- กำหนด ID เพื่อเปลี่ยน Grid -->
+          <div id="gridPart2" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="card flex flex-col">
               <h3 class="font-medium text-gray-700 mb-4 text-sm uppercase tracking-wider">กราฟเปรียบเทียบอัตราการส่งรายงาน</h3>
               <div class="w-full overflow-x-auto table-container flex-1">
-                <div class="chart-container" style="min-width: 500px; height: 250px; position: relative;">
+                <div class="chart-container" style="min-width: 400px; height: 250px; position: relative;">
                   <canvas id="courseChart"></canvas>
                 </div>
               </div>
             </div>
-
             <div class="card flex flex-col">
               <h3 class="font-medium text-gray-700 mb-4 text-sm uppercase tracking-wider">ตารางสรุปจำนวนรายหลักสูตร</h3>
               <div class="overflow-y-auto table-container" id="scrollTable1" style="max-height: 250px;">
@@ -128,11 +119,9 @@
                       <th class="px-3 py-2 text-center">เป้าหมาย</th>
                       <th class="px-3 py-2 text-center text-green-600">ส่งแล้ว</th>
                       <th class="px-3 py-2 text-center text-red-500">ค้างส่ง</th>
-                      <th class="px-3 py-2 text-right">(%)</th>
                     </tr>
                   </thead>
-                  <tbody id="courseTableBody" class="divide-y divide-gray-100">
-                  </tbody>
+                  <tbody id="courseTableBody" class="divide-y divide-gray-100"></tbody>
                 </table>
               </div>
             </div>
@@ -142,43 +131,40 @@
         <!-- PART 3: วิเคราะห์ข้อมูล -->
         <section>
           <h2 class="section-title">3. วิเคราะห์ข้อมูลการตอบกลับ (การนำไปใช้จริง)</h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div id="gridPart3" class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="card">
               <h3 class="font-medium text-blue-700 mb-2 text-sm">1. จัดทำโครงการพัฒนาองค์กร</h3>
               <div class="flex items-center gap-4 mb-4">
                 <div class="w-16 h-16"><canvas id="q1Chart"></canvas></div>
                 <div>
-                  <p class="text-xs text-gray-500">รายงานข้อมูลแล้วรวม</p>
-                  <p class="text-xl font-bold text-gray-800" id="q1Total">0 <span class="text-sm font-normal">รายการ</span></p>
+                  <p class="text-xs text-gray-500">รายงานข้อมูลแล้ว</p>
+                  <p class="text-xl font-bold text-gray-800" id="q1Total">0</p>
                 </div>
               </div>
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between items-center"><span class="text-green-600">● ดำเนินการเสร็จแล้ว</span><span class="font-medium" id="q1Done">0</span></div>
-                <div class="flex justify-between items-center"><span class="text-yellow-500">● กำลังดำเนินการ</span><span class="font-medium" id="q1Doing">0</span></div>
               </div>
             </div>
-
             <div class="card">
               <h3 class="font-medium text-emerald-600 mb-2 text-sm">2. เป็นวิทยากรถ่ายทอดความรู้</h3>
               <div class="flex items-center gap-4 mb-4">
                 <div class="w-16 h-16"><canvas id="q2Chart"></canvas></div>
                 <div>
-                  <p class="text-xs text-gray-500">รายงานข้อมูลแล้วรวม</p>
-                  <p class="text-xl font-bold text-gray-800" id="q2Total">0 <span class="text-sm font-normal">รายการ</span></p>
+                  <p class="text-xs text-gray-500">รายงานข้อมูลแล้ว</p>
+                  <p class="text-xl font-bold text-gray-800" id="q2Total">0</p>
                 </div>
               </div>
                <div class="space-y-2 text-sm">
                 <div class="flex justify-between items-center"><span class="text-emerald-500">● ดำเนินการแล้ว</span><span class="font-medium" id="q2Done">0</span></div>
               </div>
             </div>
-
             <div class="card">
               <h3 class="font-medium text-purple-600 mb-2 text-sm">3. จัดแข่งระดับชาติ/นานาชาติ</h3>
               <div class="flex items-center gap-4 mb-4">
                 <div class="w-16 h-16"><canvas id="q3Chart"></canvas></div>
                 <div>
-                  <p class="text-xs text-gray-500">รายงานข้อมูลแล้วรวม</p>
-                  <p class="text-xl font-bold text-gray-800" id="q3Total">0 <span class="text-sm font-normal">รายการ</span></p>
+                  <p class="text-xs text-gray-500">รายงานข้อมูลแล้ว</p>
+                  <p class="text-xl font-bold text-gray-800" id="q3Total">0</p>
                 </div>
               </div>
                <div class="space-y-2 text-sm">
@@ -187,31 +173,22 @@
             </div>
           </div>
         </section>
-
       </div>
 
-      <!-- บังคับตัดขึ้นหน้าใหม่ตรงนี้ สำหรับรายชื่อค้างส่ง -->
       <div id="pb4" class="pdf-page-break hidden"></div>
 
-      <!-- [PDF หน้าที่ 2 : รายชื่อคนที่ค้างส่ง] -->
+      <!-- PART 4: ระบบติดตามทวงถาม -->
       <div class="space-y-8 mt-8">
-        <!-- PART 4: ระบบติดตามทวงถาม -->
         <section class="card !overflow-visible">
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-            <div>
-              <h3 class="section-title mb-0 border-red-500 text-red-700">⚠️ รายชื่อบุคลากรที่ยังไม่รายงานผล (เพื่อติดตามทวงถาม)</h3>
-            </div>
-            <!-- ระบบ Filter -->
-            <div id="filterSection" class="w-full md:w-64">
-              <select id="filterCourse" onchange="filterPendingTable()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500 bg-white">
-                <option value="all">แสดงทุกหลักสูตร</option>
-              </select>
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="section-title mb-0 border-red-500 text-red-700">⚠️ รายชื่อบุคลากรที่ยังไม่รายงานผล</h3>
+            <div id="filterSection" class="w-64">
+              <select id="filterCourse" onchange="filterPendingTable()" class="w-full border border-gray-300 rounded px-3 py-1 text-sm bg-white"><option value="all">แสดงทุกหลักสูตร</option></select>
             </div>
           </div>
-          
           <div class="overflow-x-auto border rounded-lg table-container" id="scrollTable2" style="max-height: 400px;">
             <table class="w-full text-sm text-left">
-              <thead class="bg-red-50 text-red-800 border-b border-red-100 sticky top-0 z-10">
+              <thead class="bg-red-50 text-red-800 border-b sticky top-0 z-10">
                 <tr>
                   <th class="px-4 py-3">รหัสประจำตัว</th>
                   <th class="px-4 py-3">ชื่อ-นามสกุล</th>
@@ -219,8 +196,7 @@
                   <th class="px-4 py-3">หลักสูตรที่ค้างส่ง</th>
                 </tr>
               </thead>
-              <tbody id="pendingTableBody" class="divide-y divide-gray-100">
-              </tbody>
+              <tbody id="pendingTableBody" class="divide-y divide-gray-100"></tbody>
             </table>
           </div>
         </section>
@@ -229,9 +205,49 @@
     </div>
   </div>
 
+  <!-- ==============================================
+       แผงควบคุม Grid สำหรับตั้งค่าก่อนพิมพ์ (PDF Settings)
+       ============================================== -->
+  <div id="pdfModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-xl p-6 sm:p-8 max-w-lg w-full mx-4 shadow-2xl">
+      <h3 class="text-xl font-bold text-gray-800 mb-1">🛠️ ปรับแต่ง Grid ก่อนส่งออก PDF</h3>
+      <p class="text-sm text-gray-500 mb-6">คุณสามารถปรับขนาดการจัดวางกล่องต่างๆ (Grid Layout) ให้พอดีกับหน้ากระดาษได้ตามต้องการ</p>
+      
+      <div class="space-y-4 mb-8">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">1. รูปแบบหน้ากระดาษ</label>
+          <select id="pdfOrientation" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50">
+            <option value="landscape">แนวนอน (Landscape) - เหมาะที่สุด</option>
+            <option value="portrait">แนวตั้ง (Portrait)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">2. ตาราง Grid ส่วนที่ 1 (ภาพรวม)</label>
+          <select id="grid1Setting" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50">
+            <option value="grid-cols-4">แบ่ง 4 คอลัมน์ (เรียงยาว 1 แถว)</option>
+            <option value="grid-cols-2">แบ่ง 2 คอลัมน์ (เรียง 2x2 กล่องใหญ่ขึ้น)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">3. ตาราง Grid ส่วนที่ 2 (สรุปรายหลักสูตร)</label>
+          <select id="grid2Setting" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50">
+            <option value="grid-cols-2">แบ่ง 2 คอลัมน์ (กราฟซ้าย / ตารางขวา)</option>
+            <option value="grid-cols-1">แบ่ง 1 คอลัมน์ (กราฟอยู่บน / ตารางอยู่ล่าง)</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="flex gap-3 justify-end">
+        <button onclick="closePdfModal()" class="px-5 py-2.5 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300">ยกเลิก</button>
+        <button onclick="executePDFExport()" id="btnStartPdf" class="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow-md">
+          เริ่มสร้าง PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbz2esdJeJCqTaY8TGrjoZmfv1mSy14jiGxbmSDyFA8jBoRMckOSHOcF6KspgbJbveT0Ug/exec';
-
     let charts = {};
     let allPendingUsers = []; 
 
@@ -244,17 +260,8 @@
       document.getElementById('loading').classList.remove('hidden');
       document.getElementById('mainContent').classList.add('hidden');
 
-      fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'getDashboardData' })
-      })
-      .then(res => res.json())
-      .then(data => renderDashboard(data))
-      .catch(err => {
-        alert('เกิดข้อผิดพลาดในการดึงข้อมูล: ' + err);
-        document.getElementById('loading').innerHTML = '<p class="text-red-500">ไม่สามารถดึงข้อมูลได้ โปรดรีเฟรชหน้าเว็บอีกครั้ง</p>';
-      });
+      fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDashboardData' }) })
+      .then(res => res.json()).then(data => renderDashboard(data));
     }
 
     function createDoughnutChart(canvasId, dataValues, colors) {
@@ -262,12 +269,7 @@
       charts[canvasId] = new Chart(document.getElementById(canvasId), {
         type: 'doughnut',
         data: { datasets: [{ data: dataValues, backgroundColor: colors, borderWidth: 0 }] },
-        options: { 
-          animation: false, // ปิด Animation ป้องกันกราฟหายตอนพิมพ์ PDF
-          cutout: '75%', 
-          plugins: { tooltip: { enabled: false }, legend: { display: false } }, 
-          maintainAspectRatio: false 
-        }
+        options: { animation: false, cutout: '75%', plugins: { tooltip: { enabled: false } }, maintainAspectRatio: false }
       });
     }
 
@@ -275,161 +277,122 @@
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('mainContent').classList.remove('hidden');
 
-      const total = data.totalUsers;
-      const submitted = data.totalSubmitted;
-      const pending = total - submitted;
-      const percent = total > 0 ? Math.round((submitted / total) * 100) : 0;
-
-      document.getElementById('txtTotal').innerText = total;
-      document.getElementById('txtSubmitted').innerText = submitted;
-      document.getElementById('txtPending').innerText = pending;
-      document.getElementById('txtPercent').innerText = percent;
+      document.getElementById('txtTotal').innerText = data.totalUsers;
+      document.getElementById('txtSubmitted').innerText = data.totalSubmitted;
+      document.getElementById('txtPending').innerText = data.totalUsers - data.totalSubmitted;
+      document.getElementById('txtPercent').innerText = data.totalUsers > 0 ? Math.round((data.totalSubmitted / data.totalUsers) * 100) : 0;
 
       const courseNames = Object.keys(data.coursesData);
-      const courseTotal = [];
-      const courseSubmitted = [];
-      
+      const courseTotal = [], courseSubmitted = [];
       const tbodyCourse = document.getElementById('courseTableBody');
       const filterSelect = document.getElementById('filterCourse');
-      tbodyCourse.innerHTML = '';
-      filterSelect.innerHTML = '<option value="all">แสดงทุกหลักสูตร</option>';
+      tbodyCourse.innerHTML = ''; filterSelect.innerHTML = '<option value="all">แสดงทุกหลักสูตร</option>';
 
       courseNames.forEach(c => {
         const d = data.coursesData[c];
-        courseTotal.push(d.total);
-        courseSubmitted.push(d.submitted);
-        const cPending = d.total - d.submitted;
-        const cPercent = d.total > 0 ? Math.round((d.submitted / d.total) * 100) : 0;
-
+        courseTotal.push(d.total); courseSubmitted.push(d.submitted);
         tbodyCourse.innerHTML += `
           <tr class="bg-white border-b border-gray-100">
-            <td class="px-3 py-3 text-xs font-medium text-gray-800">${c}</td>
-            <td class="px-3 py-3 text-center text-gray-600">${d.total}</td>
-            <td class="px-3 py-3 text-center text-green-600 font-bold">${d.submitted}</td>
-            <td class="px-3 py-3 text-center text-red-500">${cPending}</td>
-            <td class="px-3 py-3 text-right font-medium">${cPercent}%</td>
-          </tr>
-        `;
+            <td class="px-3 py-2 text-xs font-medium">${c.substring(0,30)}...</td>
+            <td class="px-3 py-2 text-center text-gray-600">${d.total}</td>
+            <td class="px-3 py-2 text-center text-green-600 font-bold">${d.submitted}</td>
+            <td class="px-3 py-2 text-center text-red-500">${d.total - d.submitted}</td>
+          </tr>`;
         filterSelect.innerHTML += `<option value="${c}">${c.substring(0,40)}...</option>`;
       });
 
-      const shortLabels = courseNames.map(c => c.substring(0, 15) + '...');
       if (charts['courseChart']) charts['courseChart'].destroy();
       charts['courseChart'] = new Chart(document.getElementById('courseChart'), {
         type: 'bar',
         data: {
-          labels: shortLabels,
+          labels: courseNames.map(c => c.substring(0, 10) + '..'),
           datasets: [
-            { label: 'ส่งแล้ว', data: courseSubmitted, backgroundColor: '#3b82f6', borderRadius: 4 },
-            { label: 'ค้างส่ง', data: courseTotal.map((t,i) => t - courseSubmitted[i]), backgroundColor: '#ef4444', borderRadius: 4 }
+            { label: 'ส่งแล้ว', data: courseSubmitted, backgroundColor: '#3b82f6' },
+            { label: 'ค้างส่ง', data: courseTotal.map((t,i) => t - courseSubmitted[i]), backgroundColor: '#ef4444' }
           ]
         },
-        options: { 
-          animation: false, // ปิด Animation ป้องกันกราฟกลายเป็นสีแดงก้อนเดียวตอนพิมพ์ PDF
-          responsive: true, 
-          maintainAspectRatio: false,
-          scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } } },
-          plugins: { tooltip: { callbacks: { title: (ctx) => courseNames[ctx[0].dataIndex] } } } 
-        }
+        options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
       });
 
-      const q1Done = data.qStats.q1;
-      const q2Done = data.qStats.q2;
-      const q3Done = data.qStats.q3;
+      document.getElementById('q1Total').innerHTML = `${data.qStats.q1}`; document.getElementById('q1Done').innerText = data.qStats.q1;
+      document.getElementById('q2Total').innerHTML = `${data.qStats.q2}`; document.getElementById('q2Done').innerText = data.qStats.q2;
+      document.getElementById('q3Total').innerHTML = `${data.qStats.q3}`; document.getElementById('q3Done').innerText = data.qStats.q3;
 
-      document.getElementById('q1Total').innerHTML = `${q1Done} <span class="text-sm font-normal text-gray-500">/ ${submitted}</span>`;
-      document.getElementById('q1Done').innerText = q1Done; 
-      document.getElementById('q1Doing').innerText = "-"; 
-
-      document.getElementById('q2Total').innerHTML = `${q2Done} <span class="text-sm font-normal text-gray-500">/ ${submitted}</span>`;
-      document.getElementById('q2Done').innerText = q2Done;
-
-      document.getElementById('q3Total').innerHTML = `${q3Done} <span class="text-sm font-normal text-gray-500">/ ${submitted}</span>`;
-      document.getElementById('q3Done').innerText = q3Done;
-
-      createDoughnutChart('q1Chart', [q1Done, submitted - q1Done > 0 ? submitted - q1Done : 0], ['#2563eb', '#e2e8f0']);
-      createDoughnutChart('q2Chart', [q2Done, submitted - q2Done > 0 ? submitted - q2Done : 0], ['#10b981', '#e2e8f0']);
-      createDoughnutChart('q3Chart', [q3Done, submitted - q3Done > 0 ? submitted - q3Done : 0], ['#8b5cf6', '#e2e8f0']);
+      createDoughnutChart('q1Chart', [data.qStats.q1, data.totalSubmitted - data.qStats.q1 || 0], ['#2563eb', '#e2e8f0']);
+      createDoughnutChart('q2Chart', [data.qStats.q2, data.totalSubmitted - data.qStats.q2 || 0], ['#10b981', '#e2e8f0']);
+      createDoughnutChart('q3Chart', [data.qStats.q3, data.totalSubmitted - data.qStats.q3 || 0], ['#8b5cf6', '#e2e8f0']);
 
       allPendingUsers = data.pendingUsers;
       filterPendingTable(); 
     }
 
     function filterPendingTable() {
-      const selectedCourse = document.getElementById('filterCourse').value;
+      const selected = document.getElementById('filterCourse').value;
       const tbody = document.getElementById('pendingTableBody');
       tbody.innerHTML = '';
-
-      let filteredUsers = allPendingUsers;
-      if (selectedCourse !== 'all') {
-        filteredUsers = allPendingUsers.filter(u => u.course === selectedCourse);
-      }
-
-      if(filteredUsers.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500 bg-white">🎉 ไม่มีผู้ค้างส่งในหมวดหมู่นี้</td></tr>`;
-      } else {
-        filteredUsers.forEach(u => {
-          tbody.innerHTML += `
-            <tr class="bg-white border-b border-gray-100">
-              <td class="px-4 py-3 font-mono text-gray-600">${u.id}</td>
-              <td class="px-4 py-3 font-medium text-gray-800">${u.name}</td>
-              <td class="px-4 py-3 text-gray-500 text-xs">${u.org}</td>
-              <td class="px-4 py-3 text-xs text-red-600">${u.course}</td>
-            </tr>
-          `;
-        });
-      }
+      let users = selected !== 'all' ? allPendingUsers.filter(u => u.course === selected) : allPendingUsers;
+      if(users.length === 0) tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4">ไม่มีผู้ค้างส่ง</td></tr>`;
+      else users.forEach(u => tbody.innerHTML += `<tr class="border-b"><td class="px-4 py-2">${u.id}</td><td class="px-4 py-2">${u.name}</td><td class="px-4 py-2 text-xs">${u.org}</td><td class="px-4 py-2 text-xs text-red-600">${u.course.substring(0,30)}..</td></tr>`);
     }
 
-    // ฟังก์ชันสร้างไฟล์ PDF แบบจัด 1 หน้า
-    function exportToPDF() {
-      const btn = document.getElementById('btnPdf');
+    /* === ระบบจัดการ Grid PDF === */
+    function openPdfModal() { document.getElementById('pdfModal').classList.remove('hidden'); }
+    function closePdfModal() { document.getElementById('pdfModal').classList.add('hidden'); }
+
+    function executePDFExport() {
+      const btn = document.getElementById('btnStartPdf');
       btn.innerHTML = '⏳ กำลังประมวลผล...';
       
-      // 1. เปิดโหมดจัดหน้า PDF 
+      // 1. ดึงค่าจากหน้าต่างตั้งค่า Grid
+      const orientation = document.getElementById('pdfOrientation').value;
+      const g1Class = document.getElementById('grid1Setting').value;
+      const g2Class = document.getElementById('grid2Setting').value;
+
+      // 2. จัดการเปลี่ยนคลาส CSS ของกล่อง Grid ตามที่เลือก
+      const grid1 = document.getElementById('gridPart1');
+      const grid2 = document.getElementById('gridPart2');
+      
+      // ลบคลาสตั้งต้น (md:grid-cols-4 / lg:grid-cols-2) ออกชั่วคราว
+      grid1.className = `grid ${g1Class} gap-4`;
+      grid2.className = `grid ${g2Class} gap-6`;
+
+      // 3. เปิดโหมดจัดหน้า PDF 
       document.body.classList.add('pdf-mode');
       const mainContent = document.getElementById('mainContent');
       
-      // 2. ปลดล็อกตาราง และซ่อนสิ่งที่ไม่อยากให้เห็น
-      const tableContainers = document.querySelectorAll('.table-container');
-      tableContainers.forEach(t => {
-        t.style.maxHeight = 'none';
-        t.style.overflow = 'visible'; // ปลด overflow ป้องกันขอบตารางขาด
-      });
+      // 4. ปลดล็อกตาราง
+      document.querySelectorAll('.table-container').forEach(t => { t.style.maxHeight = 'none'; t.style.overflow = 'visible'; });
       document.getElementById('filterSection').style.display = 'none';
       document.getElementById('pb4').classList.remove('hidden');
 
-      // รอให้ Browser วาดกราฟและจัดหน้าจอให้เสร็จ (0.5 วินาที) ถึงค่อยถ่ายรูป
+      // รอ Browser จัด Grid ใหม่ 0.5 วินาที
       setTimeout(() => {
         const opt = {
           margin:       [0.3, 0.3, 0.3, 0.3],
           filename:     'รายงานสรุปผล_กกท.pdf',
           image:        { type: 'jpeg', quality: 1 }, 
-          html2canvas:  { 
-            scale: 2, 
-            useCORS: true, 
-            scrollY: 0,
-            windowWidth: 1200 // ล็อกความกว้างของหน้าจอถ่ายภาพ
-          },
-          jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }, 
+          html2canvas:  { scale: 2, useCORS: true, scrollY: 0, windowWidth: orientation === 'landscape' ? 1200 : 800 },
+          jsPDF:        { unit: 'in', format: 'a4', orientation: orientation }, 
           pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr'] } 
         };
 
-        // เริ่มประมวลผล PDF
         html2pdf().set(opt).from(mainContent).save().then(() => {
-          // 4. เมื่อโหลดเสร็จ คืนค่าทุกอย่างกลับเป็นปกติ
+          // 5. คืนค่า Grid และ Layout กลับเป็นโหมดดูบนเว็บไซต์เหมือนเดิม
           document.body.classList.remove('pdf-mode');
+          grid1.className = 'grid grid-cols-1 md:grid-cols-4 gap-4';
+          grid2.className = 'grid grid-cols-1 lg:grid-cols-2 gap-6';
           
           document.getElementById('scrollTable1').style.maxHeight = '250px';
           document.getElementById('scrollTable1').style.overflow = 'auto';
           document.getElementById('scrollTable2').style.maxHeight = '400px';
           document.getElementById('scrollTable2').style.overflow = 'auto';
-          
           document.getElementById('filterSection').style.display = 'block';
           document.getElementById('pb4').classList.add('hidden');
-          btn.innerHTML = '📥 ส่งออกเป็น PDF';
+          
+          btn.innerHTML = 'เริ่มสร้าง PDF';
+          closePdfModal();
         });
-      }, 500); // ระยะเวลาดีเลย์ 0.5 วิ
+      }, 500); 
     }
 
     window.onload = loadDashboard;
