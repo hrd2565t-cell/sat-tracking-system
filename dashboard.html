@@ -16,11 +16,11 @@
     .table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
     /* ==========================================
-       CSS โหมดจำลองกระดาษพิมพ์ (Browser Print Standard)
+       CSS โหมดจำลองกระดาษพิมพ์ (ปลดล็อกระยะขอบ)
        ========================================== */
     @media print {
-      /* บังคับตั้งค่าหน้ากระดาษเป็นแนวนอนเป็นค่าเริ่มต้น */
-      @page { size: A4 landscape; margin: 10mm; }
+      /* ปลดล็อก margin เพื่อให้ผู้ใช้ลากเส้นขอบสีฟ้าเองในเบราว์เซอร์ได้ */
+      @page { size: auto; margin: auto; }
       
       /* บังคับให้พิมพ์สีพื้นหลัง (กราฟ/ป้ายสี) ออกมาด้วยเสมอ */
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -222,8 +222,7 @@
     <div class="bg-white rounded-xl p-6 sm:p-8 max-w-lg w-full mx-4 shadow-2xl">
       <h3 class="text-xl font-bold text-gray-800 mb-1">🛠️ ปรับแต่ง Grid ก่อนพิมพ์</h3>
       <p class="text-sm text-gray-500 mb-6 border-b pb-4">
-        เมื่อกดปุ่ม "เปิดหน้าต่างพิมพ์" ระบบเบราว์เซอร์จะเปิดพรีวิวขึ้นมาให้<br>
-        คุณสามารถปรับ <b>เปอร์เซ็นต์ย่อ/ขยาย (Scale)</b> ได้ด้วยตนเองในหน้าต่างนั้นครับ
+        หลังจากกดปุ่มเปิดหน้าต่างพิมพ์ คุณสามารถเปลี่ยนเมนู <b>"ระยะขอบ (Margins)"</b> เป็น <b>"กำหนดเอง (Custom)"</b> เพื่อลากเส้นสีฟ้าจัดขอบได้ตามต้องการ
       </p>
       
       <div class="space-y-4 mb-8">
@@ -346,7 +345,6 @@
     function closePdfModal() { document.getElementById('pdfModal').classList.add('hidden'); }
 
     function executeBrowserPrint() {
-      // 1. จัดคลาส Grid ตามที่ผู้ใช้เลือกใน Modal
       const g1Class = document.getElementById('grid1Setting').value;
       const g2Class = document.getElementById('grid2Setting').value;
       const grid1 = document.getElementById('gridPart1');
@@ -355,14 +353,12 @@
       grid1.className = `grid ${g1Class} gap-4`;
       grid2.className = `grid ${g2Class} gap-6`;
 
-      // 2. ปิด Modal ลงไปก่อน เพื่อไม่ให้บังหน้าจอ
       closePdfModal();
 
-      // 3. หน่วงเวลาเล็กน้อยเพื่อให้เบราว์เซอร์จัดเรียงกล่องให้เสร็จ แล้วสั่งพิมพ์
       setTimeout(() => {
         window.print();
         
-        // 4. เมื่อปิดหน้าต่างพิมพ์แล้ว ให้คืนค่า Grid กลับไปเป็นแบบปกติ (ดูบนเว็บ)
+        // คืนค่า Grid ให้หน้าเว็บหลังพิมพ์เสร็จ
         setTimeout(() => {
           grid1.className = 'grid grid-cols-1 md:grid-cols-4 gap-4';
           grid2.className = 'grid grid-cols-1 lg:grid-cols-2 gap-6';
