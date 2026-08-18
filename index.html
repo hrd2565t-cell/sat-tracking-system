@@ -58,7 +58,15 @@
       <!-- ================= FORM SECTION ================= -->
       <form id="mainForm" class="hidden space-y-6" onsubmit="submitForm(event)">
         <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 shadow-sm">
-          <h2 class="font-semibold text-lg border-b pb-2 mb-4 text-blue-800">ข้อมูลผู้เข้ารับการอบรม</h2>
+          
+          <!-- เพิ่มส่วน Header พร้อมปุ่ม Logout -->
+          <div class="flex justify-between items-center border-b pb-2 mb-4">
+            <h2 class="font-semibold text-lg text-blue-800">ข้อมูลผู้เข้ารับการอบรม</h2>
+            <button type="button" onclick="location.reload()" class="text-sm bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 px-3 py-1 rounded-full transition font-medium">
+              🚪 ออกจากระบบ
+            </button>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label class="block text-xs text-gray-500 mb-1">ชื่อ-นามสกุล</label>
@@ -152,13 +160,16 @@
         </div>
       </form>
       
+      <!-- ปรับปรุงหน้า Success ให้กลับไปหน้า Login ชัดเจน -->
       <div id="successMsg" class="hidden text-center py-8">
         <div class="text-green-500 mb-4">
           <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         </div>
         <h2 class="text-2xl font-bold text-gray-800 mb-2">บันทึกข้อมูลสำเร็จ!</h2>
         <p class="text-gray-600">ขอบคุณสำหรับการรายงานผลการปฏิบัติหน้าที่</p>
-        <button type="button" onclick="location.reload()" class="mt-6 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition">กลับหน้าแรก</button>
+        <button type="button" onclick="location.reload()" class="mt-8 bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-300 font-medium px-6 py-3 rounded-lg transition">
+          กลับไปหน้าเข้าสู่ระบบ
+        </button>
       </div>
     </div>
   </div>
@@ -167,7 +178,6 @@
     const API_URL = 'https://script.google.com/macros/s/AKfycbz2esdJeJCqTaY8TGrjoZmfv1mSy14jiGxbmSDyFA8jBoRMckOSHOcF6KspgbJbveT0Ug/exec';
     let currentUserId = '';
 
-    // ฟังก์ชันสลับแท็บ Login
     function switchTab(tab) {
       document.getElementById('loginError').classList.add('hidden');
       if(tab === 'user') {
@@ -183,13 +193,10 @@
       }
     }
 
-    // ฟังก์ชัน Login แอดมิน
     function loginAdmin() {
       const pin = document.getElementById('adminPinInput').value;
       if (pin === '336699') {
-        // บันทึกสถานะการล็อกอินไว้ในเบราว์เซอร์
         sessionStorage.setItem('isAdminLoggedIn', 'true');
-        // เปลี่ยนหน้าไปที่ Dashboard
         window.location.href = 'dashboard.html';
       } else {
         const errorEl = document.getElementById('loginError');
@@ -209,7 +216,6 @@
       if (status !== 'ยังไม่ได้ดำเนินการ') { fields.classList.remove('hidden'); } else { fields.classList.add('hidden'); }
     }
 
-    // ฟังก์ชัน Login บุคลากร (เดิมชื่อ searchUser)
     function loginUser() {
       const userId = document.getElementById('userIdInput').value.trim();
       const errorEl = document.getElementById('loginError');
@@ -277,7 +283,6 @@
           }
           document.getElementById('mainForm').classList.remove('hidden');
         } else {
-          // คืนหน้าจอ Login กลับมาถ้าไม่พบข้อมูล
           document.getElementById('loginSection').classList.remove('hidden');
           errorEl.innerText = 'ไม่พบข้อมูลในระบบ กรุณาตรวจสอบรหัสอีกครั้ง';
           errorEl.classList.remove('hidden');
