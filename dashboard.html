@@ -6,8 +6,12 @@
   <title>Admin Dashboard - ระบบติดตามผล กกท.</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <style> body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; } </style>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style> 
+    body { font-family: 'Sarabun', sans-serif; background-color: #f1f5f9; } 
+    .card { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); padding: 1.5rem; }
+    .section-title { font-size: 1.25rem; font-weight: 600; color: #1e293b; margin-bottom: 1rem; border-left: 4px solid #3b82f6; padding-left: 0.75rem; }
+  </style>
   
   <!-- สคริปต์ตรวจสอบการ Login -->
   <script>
@@ -17,75 +21,182 @@
     }
   </script>
 </head>
-<body class="text-gray-800 p-4 sm:p-8">
+<body class="text-gray-800 p-4 sm:p-6 lg:p-8">
+  
   <div class="max-w-7xl mx-auto">
-    <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 bg-white p-6 rounded-xl shadow-sm border-t-4 border-blue-800">
       <div>
-        <h1 class="text-2xl font-bold text-blue-800">📊 Dashboard สรุปผลการปฏิบัติหน้าที่</h1>
-        <p class="text-gray-600">โครงการพัฒนาบุคลากรโดยการกีฬาแห่งประเทศไทย</p>
+        <h1 class="text-2xl font-bold text-blue-900 mb-1">📊 Dashboard วิเคราะห์ผลการปฏิบัติหน้าที่</h1>
+        <p class="text-sm text-gray-500">โครงการเพิ่มศักยภาพในการบริหารจัดการกีฬาไปสู่ความเป็นเลิศ (การกีฬาแห่งประเทศไทย)</p>
       </div>
-      <div class="flex gap-2">
-        <button onclick="logoutAdmin()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded shadow hover:bg-gray-300 transition">ออกจากระบบ</button>
-        <button onclick="loadDashboard()" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">รีเฟรชข้อมูล</button>
+      <div class="flex gap-2 w-full md:w-auto">
+        <button onclick="logoutAdmin()" class="flex-1 md:flex-none bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-100 transition font-medium">ออกจากระบบ</button>
+        <button onclick="loadDashboard()" class="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow flex justify-center items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          รีเฟรชข้อมูล
+        </button>
       </div>
     </div>
 
-    <div id="loading" class="text-center py-10 text-blue-600 font-semibold animate-pulse">
-      กำลังดึงข้อมูลจากระบบ ฐานข้อมูล Google Sheets...
+    <!-- Loading State -->
+    <div id="loading" class="text-center py-20">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+      <p class="text-blue-600 font-medium">กำลังดึงข้อมูลและประมวลผลจากฐานข้อมูล...</p>
     </div>
 
-    <div id="mainContent" class="hidden space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white p-6 rounded-xl shadow border-l-4 border-blue-500">
-          <p class="text-sm text-gray-500 mb-1">เป้าหมายผู้เข้าร่วมทั้งหมด (รายหลักสูตร)</p>
-          <h2 class="text-3xl font-bold" id="txtTotal">0</h2>
+    <div id="mainContent" class="hidden space-y-8">
+      
+      <!-- ================= PART 1: ภาพรวม (Overview) ================= -->
+      <section>
+        <h2 class="section-title">1. ภาพรวมการรายงานผล (Overview)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="card border-b-4 border-blue-500 relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-50 rounded-full z-0 opacity-50"></div>
+            <p class="text-sm text-gray-500 mb-1 relative z-10">เป้าหมายทั้งหมด (รายหลักสูตร)</p>
+            <h3 class="text-4xl font-bold text-gray-800 relative z-10" id="txtTotal">0</h3>
+          </div>
+          <div class="card border-b-4 border-green-500 relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-green-50 rounded-full z-0 opacity-50"></div>
+            <p class="text-sm text-gray-500 mb-1 relative z-10">ตอบกลับมาแล้ว</p>
+            <h3 class="text-4xl font-bold text-green-600 relative z-10" id="txtSubmitted">0</h3>
+          </div>
+          <div class="card border-b-4 border-red-500 relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-red-50 rounded-full z-0 opacity-50"></div>
+            <p class="text-sm text-gray-500 mb-1 relative z-10">รอการตอบกลับ (Pending)</p>
+            <h3 class="text-4xl font-bold text-red-500 relative z-10" id="txtPending">0</h3>
+          </div>
+          <div class="card bg-blue-800 text-white flex flex-col justify-center items-center text-center">
+            <p class="text-blue-200 text-sm mb-1">ความคืบหน้าภาพรวม</p>
+            <div class="flex items-end gap-1">
+              <h3 class="text-5xl font-bold" id="txtPercent">0</h3><span class="text-2xl mb-1">%</span>
+            </div>
+          </div>
         </div>
-        <div class="bg-white p-6 rounded-xl shadow border-l-4 border-green-500">
-          <p class="text-sm text-gray-500 mb-1">ตอบกลับมาแล้ว</p>
-          <h2 class="text-3xl font-bold text-green-600" id="txtSubmitted">0</h2>
-        </div>
-        <div class="bg-white p-6 rounded-xl shadow border-l-4 border-red-500">
-          <p class="text-sm text-gray-500 mb-1">รอการตอบกลับ (Pending)</p>
-          <h2 class="text-3xl font-bold text-red-600" id="txtPending">0</h2>
-        </div>
-      </div>
+      </section>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded-xl shadow">
-          <h3 class="font-semibold mb-4 text-gray-700">อัตราการตอบกลับรายหลักสูตร</h3>
-          <canvas id="courseChart" height="200"></canvas>
+      <!-- ================= PART 2: สรุปผลรายหลักสูตร (Course Summary) ================= -->
+      <section>
+        <h2 class="section-title">2. สรุปผลเป็นรายหลักสูตร</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- ฝั่งซ้าย: กราฟแท่ง -->
+          <div class="card">
+            <h3 class="font-medium text-gray-700 mb-4 text-sm uppercase tracking-wider">กราฟเปรียบเทียบอัตราการส่งรายงาน</h3>
+            <canvas id="courseChart" height="250"></canvas>
+          </div>
+          <!-- ฝั่งขวา: ตารางสรุปตัวเลข -->
+          <div class="card flex flex-col">
+            <h3 class="font-medium text-gray-700 mb-4 text-sm uppercase tracking-wider">ตารางสรุปจำนวนรายหลักสูตร</h3>
+            <div class="overflow-x-auto flex-1">
+              <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50 text-gray-600 border-b">
+                  <tr>
+                    <th class="px-3 py-2">ชื่อหลักสูตร</th>
+                    <th class="px-3 py-2 text-center">เป้าหมาย</th>
+                    <th class="px-3 py-2 text-center text-green-600">ส่งแล้ว</th>
+                    <th class="px-3 py-2 text-center text-red-500">ค้างส่ง</th>
+                    <th class="px-3 py-2 text-right">คิดเป็น (%)</th>
+                  </tr>
+                </thead>
+                <tbody id="courseTableBody" class="divide-y divide-gray-100">
+                  <!-- JS แทรกข้อมูลที่นี่ -->
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-        <div class="bg-white p-6 rounded-xl shadow">
-          <h3 class="font-semibold mb-4 text-gray-700">ภาพรวมการนำองค์ความรู้ไปปฏิบัติจริง</h3>
-          <canvas id="actionChart" height="200"></canvas>
-        </div>
-      </div>
+      </section>
 
-      <div class="bg-white p-6 rounded-xl shadow">
-        <h3 class="font-semibold mb-4 text-gray-700 text-lg">⚠️ รายชื่อผู้ที่ยังไม่รายงานผล (เพื่อติดตามทวงถาม)</h3>
-        <div class="overflow-x-auto">
+      <!-- ================= PART 3: วิเคราะห์ข้อมูลการตอบกลับ (Response Analysis) ================= -->
+      <section>
+        <h2 class="section-title">3. วิเคราะห์ข้อมูลการตอบกลับ (การนำไปใช้จริง)</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="card">
+            <h3 class="font-medium text-blue-700 mb-2 text-sm">1. จัดทำโครงการพัฒนาองค์กร</h3>
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-16 h-16"><canvas id="q1Chart"></canvas></div>
+              <div>
+                <p class="text-xs text-gray-500">รายงานข้อมูลแล้วรวม</p>
+                <p class="text-xl font-bold text-gray-800" id="q1Total">0 <span class="text-sm font-normal">รายการ</span></p>
+              </div>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between items-center"><span class="text-green-600">● ดำเนินการเสร็จแล้ว</span><span class="font-medium" id="q1Done">0</span></div>
+              <div class="flex justify-between items-center"><span class="text-yellow-500">● กำลังดำเนินการ</span><span class="font-medium" id="q1Doing">0</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="font-medium text-emerald-600 mb-2 text-sm">2. เป็นวิทยากรถ่ายทอดความรู้</h3>
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-16 h-16"><canvas id="q2Chart"></canvas></div>
+              <div>
+                <p class="text-xs text-gray-500">รายงานข้อมูลแล้วรวม</p>
+                <p class="text-xl font-bold text-gray-800" id="q2Total">0 <span class="text-sm font-normal">รายการ</span></p>
+              </div>
+            </div>
+             <div class="space-y-2 text-sm">
+              <div class="flex justify-between items-center"><span class="text-emerald-500">● ดำเนินการแล้ว</span><span class="font-medium" id="q2Done">0</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="font-medium text-purple-600 mb-2 text-sm">3. จัดแข่งระดับชาติ/นานาชาติ</h3>
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-16 h-16"><canvas id="q3Chart"></canvas></div>
+              <div>
+                <p class="text-xs text-gray-500">รายงานข้อมูลแล้วรวม</p>
+                <p class="text-xl font-bold text-gray-800" id="q3Total">0 <span class="text-sm font-normal">รายการ</span></p>
+              </div>
+            </div>
+             <div class="space-y-2 text-sm">
+              <div class="flex justify-between items-center"><span class="text-purple-500">● ดำเนินการแล้ว</span><span class="font-medium" id="q3Done">0</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PART 4: ระบบติดตามทวงถาม (Pending Tracking) ================= -->
+      <section class="card">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+          <div>
+            <h3 class="section-title mb-0 border-red-500 text-red-700">⚠️ รายชื่อบุคลากรที่ยังไม่รายงานผล (เพื่อติดตามทวงถาม)</h3>
+          </div>
+          <!-- ระบบ Filter -->
+          <div class="w-full md:w-64">
+            <select id="filterCourse" onchange="filterPendingTable()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500">
+              <option value="all">แสดงทุกหลักสูตร</option>
+              <!-- JS จะดึงรายชื่อหลักสูตรมาใส่ตรงนี้ -->
+            </select>
+          </div>
+        </div>
+        
+        <div class="overflow-x-auto border rounded-lg">
           <table class="w-full text-sm text-left">
-            <thead class="bg-gray-100 text-gray-600">
+            <thead class="bg-red-50 text-red-800 border-b border-red-100">
               <tr>
-                <th class="px-4 py-3 rounded-tl-lg">รหัสประจำตัว</th>
+                <th class="px-4 py-3">รหัสประจำตัว</th>
                 <th class="px-4 py-3">ชื่อ-นามสกุล</th>
                 <th class="px-4 py-3">หน่วยงาน</th>
-                <th class="px-4 py-3 rounded-tr-lg">หลักสูตรที่ค้างส่ง</th>
+                <th class="px-4 py-3">หลักสูตรที่ค้างส่ง</th>
               </tr>
             </thead>
-            <tbody id="pendingTableBody" class="divide-y divide-gray-200">
+            <tbody id="pendingTableBody" class="divide-y divide-gray-100">
+              <!-- ข้อมูลจะถูกเติมด้วย JS -->
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
+
     </div>
   </div>
 
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbz2esdJeJCqTaY8TGrjoZmfv1mSy14jiGxbmSDyFA8jBoRMckOSHOcF6KspgbJbveT0Ug/exec';
 
-    let courseChartInst = null;
-    let actionChartInst = null;
+    // ตัวแปรเก็บกราฟเพื่อลบสร้างใหม่ได้
+    let charts = {};
+    let allPendingUsers = []; // เก็บรายชื่อค้างส่งทั้งหมดไว้เพื่อทำระบบ Filter
 
     function logoutAdmin() {
       sessionStorage.removeItem('isAdminLoggedIn');
@@ -105,7 +216,16 @@
       .then(data => renderDashboard(data))
       .catch(err => {
         alert('เกิดข้อผิดพลาดในการดึงข้อมูล: ' + err);
-        document.getElementById('loading').innerText = 'ไม่สามารถดึงข้อมูลได้ โปรดลองรีเฟรชอีกครั้ง';
+        document.getElementById('loading').innerHTML = '<p class="text-red-500">ไม่สามารถดึงข้อมูลได้ โปรดรีเฟรชหน้าเว็บอีกครั้ง</p>';
+      });
+    }
+
+    function createDoughnutChart(canvasId, dataValues, colors) {
+      if(charts[canvasId]) charts[canvasId].destroy();
+      charts[canvasId] = new Chart(document.getElementById(canvasId), {
+        type: 'doughnut',
+        data: { datasets: [{ data: dataValues, backgroundColor: colors, borderWidth: 0 }] },
+        options: { cutout: '75%', plugins: { tooltip: { enabled: false }, legend: { display: false } } }
       });
     }
 
@@ -113,52 +233,113 @@
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('mainContent').classList.remove('hidden');
 
-      document.getElementById('txtTotal').innerText = data.totalUsers + ' รายการ';
-      document.getElementById('txtSubmitted').innerText = data.totalSubmitted + ' รายการ';
-      document.getElementById('txtPending').innerText = (data.totalUsers - data.totalSubmitted) + ' รายการ';
+      // 1. ภาพรวม
+      const total = data.totalUsers;
+      const submitted = data.totalSubmitted;
+      const pending = total - submitted;
+      const percent = total > 0 ? Math.round((submitted / total) * 100) : 0;
 
-      const courseLabels = Object.keys(data.coursesData).map(c => c.substring(0, 30) + '...');
-      const courseTotal = Object.values(data.coursesData).map(d => d.total);
-      const courseSubmitted = Object.values(data.coursesData).map(d => d.submitted);
+      document.getElementById('txtTotal').innerText = total;
+      document.getElementById('txtSubmitted').innerText = submitted;
+      document.getElementById('txtPending').innerText = pending;
+      document.getElementById('txtPercent').innerText = percent;
 
-      if (courseChartInst) courseChartInst.destroy();
-      courseChartInst = new Chart(document.getElementById('courseChart'), {
+      // 2. สรุปรายหลักสูตร
+      const courseNames = Object.keys(data.coursesData);
+      const courseTotal = [];
+      const courseSubmitted = [];
+      
+      const tbodyCourse = document.getElementById('courseTableBody');
+      const filterSelect = document.getElementById('filterCourse');
+      tbodyCourse.innerHTML = '';
+      filterSelect.innerHTML = '<option value="all">แสดงทุกหลักสูตร</option>';
+
+      courseNames.forEach(c => {
+        const d = data.coursesData[c];
+        courseTotal.push(d.total);
+        courseSubmitted.push(d.submitted);
+        const cPending = d.total - d.submitted;
+        const cPercent = d.total > 0 ? Math.round((d.submitted / d.total) * 100) : 0;
+
+        // เติมตารางรายหลักสูตร
+        tbodyCourse.innerHTML += `
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-3 text-xs font-medium text-gray-800">${c}</td>
+            <td class="px-3 py-3 text-center bg-gray-50">${d.total}</td>
+            <td class="px-3 py-3 text-center text-green-600 font-bold">${d.submitted}</td>
+            <td class="px-3 py-3 text-center text-red-500">${cPending}</td>
+            <td class="px-3 py-3 text-right font-medium">${cPercent}%</td>
+          </tr>
+        `;
+        // เติม Dropdown สำหรับ Filter
+        filterSelect.innerHTML += `<option value="${c}">${c.substring(0,40)}...</option>`;
+      });
+
+      // วาดกราฟแท่งหลักสูตร
+      const shortLabels = courseNames.map(c => c.substring(0, 15) + '...');
+      if (charts['courseChart']) charts['courseChart'].destroy();
+      charts['courseChart'] = new Chart(document.getElementById('courseChart'), {
         type: 'bar',
         data: {
-          labels: courseLabels,
+          labels: shortLabels,
           datasets: [
-            { label: 'ส่งแล้ว', data: courseSubmitted, backgroundColor: '#3b82f6' },
-            { label: 'เป้าหมายทั้งหมด', data: courseTotal, backgroundColor: '#e5e7eb' }
+            { label: 'ส่งแล้ว', data: courseSubmitted, backgroundColor: '#3b82f6', borderRadius: 4 },
+            { label: 'ค้างส่ง', data: courseTotal.map((t,i) => t - courseSubmitted[i]), backgroundColor: '#ef4444', borderRadius: 4 }
           ]
         },
-        options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        options: { 
+          responsive: true, maintainAspectRatio: false,
+          scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } } },
+          plugins: { tooltip: { callbacks: { title: (ctx) => courseNames[ctx[0].dataIndex] } } } // โชว์ชื่อเต็มตอนชี้เมาส์
+        }
       });
 
-      if (actionChartInst) actionChartInst.destroy();
-      actionChartInst = new Chart(document.getElementById('actionChart'), {
-        type: 'doughnut',
-        data: {
-          labels: ['จัดทำโครงการแล้ว', 'เป็นวิทยากรแล้ว', 'จัดแข่งระดับชาติ/นานาชาติ'],
-          datasets: [{
-            data: [data.qStats.q1, data.qStats.q2, data.qStats.q3],
-            backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6']
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
+      // 3. วิเคราะห์ข้อมูลการตอบกลับ (สมมติตัวเลขจากการที่ API ส่งมา หรือคำนวณคร่าวๆ)
+      // *เนื่องจาก API เดิมส่งมาแค่ Done รวม เราจะคำนวณเปอร์เซ็นต์โชว์เป็นกราฟโดนัทเทียบกับคนที่ส่งแล้ว
+      const q1Done = data.qStats.q1;
+      const q2Done = data.qStats.q2;
+      const q3Done = data.qStats.q3;
 
+      document.getElementById('q1Total').innerHTML = `${q1Done} <span class="text-sm font-normal text-gray-500">/ ${submitted}</span>`;
+      document.getElementById('q1Done').innerText = q1Done; 
+      document.getElementById('q1Doing').innerText = "-"; // (API เดิมไม่ได้แยกสถานะ กำลังทำ/ทำเสร็จ)
+
+      document.getElementById('q2Total').innerHTML = `${q2Done} <span class="text-sm font-normal text-gray-500">/ ${submitted}</span>`;
+      document.getElementById('q2Done').innerText = q2Done;
+
+      document.getElementById('q3Total').innerHTML = `${q3Done} <span class="text-sm font-normal text-gray-500">/ ${submitted}</span>`;
+      document.getElementById('q3Done').innerText = q3Done;
+
+      createDoughnutChart('q1Chart', [q1Done, submitted - q1Done], ['#2563eb', '#e2e8f0']);
+      createDoughnutChart('q2Chart', [q2Done, submitted - q2Done], ['#10b981', '#e2e8f0']);
+      createDoughnutChart('q3Chart', [q3Done, submitted - q3Done], ['#8b5cf6', '#e2e8f0']);
+
+      // 4. รายชื่อค้างส่ง (เก็บลงตัวแปร Global เพื่อให้ Filter ได้)
+      allPendingUsers = data.pendingUsers;
+      filterPendingTable(); // เรียกฟังก์ชันแสดงตาราง
+    }
+
+    // ฟังก์ชันกรองตารางรายชื่อค้างส่ง
+    function filterPendingTable() {
+      const selectedCourse = document.getElementById('filterCourse').value;
       const tbody = document.getElementById('pendingTableBody');
       tbody.innerHTML = '';
-      if(data.pendingUsers.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-green-600 font-medium">บุคลากรทุกท่านส่งรายงานครบถ้วนแล้ว 🎉</td></tr>`;
+
+      let filteredUsers = allPendingUsers;
+      if (selectedCourse !== 'all') {
+        filteredUsers = allPendingUsers.filter(u => u.course === selectedCourse);
+      }
+
+      if(filteredUsers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">🎉 ไม่มีผู้ค้างส่งในหมวดหมู่นี้</td></tr>`;
       } else {
-        data.pendingUsers.forEach(u => {
+        filteredUsers.forEach(u => {
           tbody.innerHTML += `
-            <tr class="hover:bg-gray-50">
-              <td class="px-4 py-3">${u.id}</td>
-              <td class="px-4 py-3 font-medium">${u.name}</td>
-              <td class="px-4 py-3 text-gray-500">${u.org}</td>
-              <td class="px-4 py-3 text-xs text-gray-500">${u.course}</td>
+            <tr class="hover:bg-red-50/50 transition">
+              <td class="px-4 py-3 font-mono text-gray-600">${u.id}</td>
+              <td class="px-4 py-3 font-medium text-gray-800">${u.name}</td>
+              <td class="px-4 py-3 text-gray-500 text-xs">${u.org}</td>
+              <td class="px-4 py-3 text-xs text-red-600">${u.course}</td>
             </tr>
           `;
         });
