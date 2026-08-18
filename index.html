@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบติดตามผลการปฏิบัติหน้าที่ - กกท.</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
+    .loader { border-top-color: #3b82f6; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
+    @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="text-gray-800">
+  <div class="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div class="bg-blue-800 text-white p-6 rounded-t-xl shadow-md text-center">
+      <h1 class="text-2xl font-semibold mb-2">แบบติดตามผลการปฏิบัติหน้าที่</h1>
+      <p class="text-sm opacity-90">โครงการพัฒนาบุคลากรโดยการกีฬาแห่งประเทศไทย (งบประมาณกองทุนฯ)</p>
+      <div class="mt-4 inline-block bg-red-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+        กำหนดส่งภายใน: 30 กันยายน 2569
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-b-xl shadow-md mb-6">
+      
+      <!-- ================= LOGIN SECTION ================= -->
+      <div id="loginSection" class="max-w-md mx-auto py-4">
+        <!-- Tabs -->
+        <div class="flex border-b mb-6 text-center">
+          <button type="button" onclick="switchTab('user')" id="tabUser" class="w-1/2 py-3 text-blue-600 border-b-2 border-blue-600 font-medium transition">👤 สำหรับบุคลากร</button>
+          <button type="button" onclick="switchTab('admin')" id="tabAdmin" class="w-1/2 py-3 text-gray-400 border-b-2 border-transparent font-medium hover:text-blue-600 transition">⚙️ ผู้ดูแลระบบ</button>
+        </div>
+
+        <!-- แท็บเข้าสู่ระบบบุคลากร -->
+        <div id="userLoginBox">
+          <label class="block text-sm font-medium text-gray-700 mb-2">เลขบัตรประจำตัวประชาชน (13 หลัก)</label>
+          <input type="text" id="userIdInput" maxlength="13" class="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4 text-center text-lg tracking-widest" placeholder="ระบุเลข 13 หลัก">
+          <button type="button" onclick="loginUser()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition text-lg shadow-md">เข้าสู่ระบบ</button>
+        </div>
+
+        <!-- แท็บเข้าสู่ระบบผู้ดูแลระบบ -->
+        <div id="adminLoginBox" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">รหัสผ่านสำหรับผู้ดูแลระบบ (PIN)</label>
+          <input type="password" id="adminPinInput" maxlength="6" class="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-gray-800 focus:border-gray-800 mb-4 text-center text-lg tracking-widest" placeholder="ระบุ PIN 6 หลัก">
+          <button type="button" onclick="loginAdmin()" class="w-full bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-lg font-medium transition text-lg shadow-md">เข้าสู่ระบบจัดการ (Dashboard)</button>
+        </div>
+
+        <p id="loginError" class="text-red-500 text-sm mt-4 text-center hidden"></p>
+      </div>
+
+      <!-- Loading Spinner -->
+      <div id="loading" class="hidden flex justify-center items-center py-8">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-10 w-10"></div>
+        <span class="ml-3 text-blue-600 font-medium" id="loadingText">กำลังประมวลผล...</span>
+      </div>
+
+      <!-- ================= FORM SECTION ================= -->
+      <form id="mainForm" class="hidden space-y-6" onsubmit="submitForm(event)">
+        <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 shadow-sm">
+          <h2 class="font-semibold text-lg border-b pb-2 mb-4 text-blue-800">ข้อมูลผู้เข้ารับการอบรม</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">ชื่อ-นามสกุล</label>
+              <input type="text" id="userName" class="w-full bg-gray-200 border-gray-300 rounded px-3 py-2 text-sm font-medium text-gray-700" readonly>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">หน่วยงานสังกัด</label>
+              <input type="text" id="userOrg" class="w-full bg-gray-200 border-gray-300 rounded px-3 py-2 text-sm font-medium text-gray-700" readonly>
+            </div>
+          </div>
+          <div class="flex gap-3 text-sm mb-4">
+             <div class="bg-white px-3 py-2 rounded shadow-sm flex-1 text-center border border-gray-200">
+                <span class="block text-xs text-gray-500">จำนวนหลักสูตร</span>
+                <span class="font-bold text-lg text-blue-600" id="totalCount">0</span>
+             </div>
+             <div class="bg-white px-3 py-2 rounded shadow-sm flex-1 text-center border border-gray-200">
+                <span class="block text-xs text-gray-500">รายงานแล้ว</span>
+                <span class="font-bold text-lg text-green-500" id="submittedCount">0</span>
+             </div>
+             <div class="bg-white px-3 py-2 rounded shadow-sm flex-1 text-center border border-gray-200">
+                <span class="block text-xs text-gray-500">รอรายงาน</span>
+                <span class="font-bold text-lg text-red-500" id="pendingCount">0</span>
+             </div>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-blue-700 mb-1">เลือกหลักสูตรที่ต้องการรายงานผล <span class="text-red-500">*</span></label>
+            <select id="courseName" class="w-full border border-blue-400 bg-white rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 cursor-pointer shadow-sm"></select>
+          </div>
+        </div>
+
+        <div id="allDoneMsg" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-6 rounded-lg text-center">
+           <svg class="w-12 h-12 mx-auto mb-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+           <h3 class="text-xl font-bold mb-1">ยอดเยี่ยมมาก!</h3>
+           <p>คุณได้รายงานผลครบทุกหลักสูตรที่เข้าร่วมอบรมเรียบร้อยแล้ว</p>
+        </div>
+
+        <div id="questionSection" class="space-y-6">
+          <div class="border-l-4 border-blue-500 pl-4 py-2">
+            <h3 class="font-medium text-lg mb-2">1. การนำองค์ความรู้ไปปรับใช้ในการพัฒนาองค์กร (จัดทำโครงการ)</h3>
+            <select id="q1Status" class="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-blue-500 mb-3" onchange="toggleFields('q1')">
+              <option value="ยังไม่ได้ดำเนินการ" selected>ยังไม่ได้ดำเนินการ</option>
+              <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+              <option value="ดำเนินการแล้วเสร็จ">ดำเนินการแล้วเสร็จ</option>
+            </select>
+            <div id="q1Fields" class="hidden space-y-3 bg-blue-50 p-4 rounded-lg">
+              <div>
+                <label class="block text-sm mb-1">อธิบายชื่อโครงการและผลลัพธ์โดยสังเขป <span class="text-red-500">*</span></label>
+                <textarea id="q1Detail" rows="3" class="w-full border border-gray-300 rounded px-3 py-2"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm mb-1">แนบไฟล์หลักฐาน (ไม่เกิน 10MB) <span class="text-red-500">*</span></label>
+                <input type="file" id="q1File" class="w-full text-sm bg-white">
+              </div>
+            </div>
+          </div>
+          <div class="border-l-4 border-green-500 pl-4 py-2">
+            <h3 class="font-medium text-lg mb-2">2. การถ่ายทอดองค์ความรู้ (เป็นวิทยากร อบรมผู้ฝึกสอน/ผู้ตัดสิน)</h3>
+            <select id="q2Status" class="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-green-500 mb-3" onchange="toggleFields('q2')">
+              <option value="ยังไม่ได้ดำเนินการ" selected>ยังไม่ได้ดำเนินการ</option>
+              <option value="ดำเนินการแล้ว">ดำเนินการแล้ว</option>
+            </select>
+            <div id="q2Fields" class="hidden space-y-3 bg-green-50 p-4 rounded-lg">
+              <div>
+                <label class="block text-sm mb-1">ระบุหน่วยงาน กลุ่มเป้าหมาย และจำนวนผู้เข้าร่วม <span class="text-red-500">*</span></label>
+                <textarea id="q2Detail" rows="3" class="w-full border border-gray-300 rounded px-3 py-2"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm mb-1">แนบไฟล์หลักฐาน (รูปถ่าย/หนังสือเชิญ ไม่เกิน 10MB) <span class="text-red-500">*</span></label>
+                <input type="file" id="q2File" class="w-full text-sm bg-white">
+              </div>
+            </div>
+          </div>
+          <div class="border-l-4 border-purple-500 pl-4 py-2">
+            <h3 class="font-medium text-lg mb-2">3. การปรับใช้ในการจัดการแข่งขันกีฬาระดับชาติ/นานาชาติ</h3>
+            <select id="q3Status" class="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-purple-500 mb-3" onchange="toggleFields('q3')">
+              <option value="ยังไม่ได้ดำเนินการ" selected>ยังไม่ได้ดำเนินการ</option>
+              <option value="ดำเนินการแล้ว">ดำเนินการแล้ว</option>
+            </select>
+            <div id="q3Fields" class="hidden space-y-3 bg-purple-50 p-4 rounded-lg">
+              <div>
+                <label class="block text-sm mb-1">ระบุชื่อรายการแข่งขัน และหน้าที่ที่รับผิดชอบ <span class="text-red-500">*</span></label>
+                <textarea id="q3Detail" rows="3" class="w-full border border-gray-300 rounded px-3 py-2"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm mb-1">แนบไฟล์หลักฐาน (สูจิบัตร/รูปถ่าย/คำสั่ง ไม่เกิน 10MB) <span class="text-red-500">*</span></label>
+                <input type="file" id="q3File" class="w-full text-sm bg-white">
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-lg text-lg">บันทึกและส่งรายงาน</button>
+        </div>
+      </form>
+      
+      <div id="successMsg" class="hidden text-center py-8">
+        <div class="text-green-500 mb-4">
+          <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">บันทึกข้อมูลสำเร็จ!</h2>
+        <p class="text-gray-600">ขอบคุณสำหรับการรายงานผลการปฏิบัติหน้าที่</p>
+        <button type="button" onclick="location.reload()" class="mt-6 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition">กลับหน้าแรก</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbz2esdJeJCqTaY8TGrjoZmfv1mSy14jiGxbmSDyFA8jBoRMckOSHOcF6KspgbJbveT0Ug/exec';
+    let currentUserId = '';
+
+    // ฟังก์ชันสลับแท็บ Login
+    function switchTab(tab) {
+      document.getElementById('loginError').classList.add('hidden');
+      if(tab === 'user') {
+        document.getElementById('tabUser').className = 'w-1/2 py-3 text-blue-600 border-b-2 border-blue-600 font-medium transition';
+        document.getElementById('tabAdmin').className = 'w-1/2 py-3 text-gray-400 border-b-2 border-transparent font-medium hover:text-blue-600 transition';
+        document.getElementById('userLoginBox').classList.remove('hidden');
+        document.getElementById('adminLoginBox').classList.add('hidden');
+      } else {
+        document.getElementById('tabAdmin').className = 'w-1/2 py-3 text-gray-800 border-b-2 border-gray-800 font-medium transition';
+        document.getElementById('tabUser').className = 'w-1/2 py-3 text-gray-400 border-b-2 border-transparent font-medium hover:text-blue-600 transition';
+        document.getElementById('adminLoginBox').classList.remove('hidden');
+        document.getElementById('userLoginBox').classList.add('hidden');
+      }
+    }
+
+    // ฟังก์ชัน Login แอดมิน
+    function loginAdmin() {
+      const pin = document.getElementById('adminPinInput').value;
+      if (pin === '336699') {
+        // บันทึกสถานะการล็อกอินไว้ในเบราว์เซอร์
+        sessionStorage.setItem('isAdminLoggedIn', 'true');
+        // เปลี่ยนหน้าไปที่ Dashboard
+        window.location.href = 'dashboard.html';
+      } else {
+        const errorEl = document.getElementById('loginError');
+        errorEl.innerText = 'รหัส PIN ผู้ดูแลระบบไม่ถูกต้อง';
+        errorEl.classList.remove('hidden');
+      }
+    }
+
+    function showLoading(show, text = 'กำลังประมวลผล...') {
+      document.getElementById('loading').classList.toggle('hidden', !show);
+      document.getElementById('loadingText').innerText = text;
+    }
+
+    function toggleFields(qId) {
+      const status = document.getElementById(qId + 'Status').value;
+      const fields = document.getElementById(qId + 'Fields');
+      if (status !== 'ยังไม่ได้ดำเนินการ') { fields.classList.remove('hidden'); } else { fields.classList.add('hidden'); }
+    }
+
+    // ฟังก์ชัน Login บุคลากร (เดิมชื่อ searchUser)
+    function loginUser() {
+      const userId = document.getElementById('userIdInput').value.trim();
+      const errorEl = document.getElementById('loginError');
+      
+      if (!userId) {
+        errorEl.innerText = 'กรุณาระบุเลขบัตรประจำตัวประชาชน';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      if (userId.length !== 13) {
+        errorEl.innerText = 'กรุณาระบุเลขบัตรประจำตัวประชาชนให้ครบ 13 หลัก';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      
+      errorEl.classList.add('hidden');
+      showLoading(true, 'กำลังเข้าสู่ระบบ...');
+      document.getElementById('loginSection').classList.add('hidden');
+
+      fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'getUserData', userId: userId })
+      })
+      .then(response => response.json())
+      .then(res => {
+        showLoading(false);
+        if (res.found) {
+          currentUserId = userId;
+          document.getElementById('userName').value = res.name;
+          document.getElementById('userOrg').value = res.org; 
+          
+          const courseSelect = document.getElementById('courseName');
+          courseSelect.innerHTML = '';
+          let pendingCount = 0;
+          let firstPendingIndex = -1;
+          
+          res.courses.forEach(function(course, index) {
+            let isSubmitted = res.submittedCourses.includes(course);
+            let option = document.createElement('option');
+            option.value = course;
+            
+            if(isSubmitted) {
+              option.textContent = '✅ ' + course + ' (ส่งรายงานแล้ว)';
+              option.disabled = true; option.className = 'text-gray-400 bg-gray-100';
+            } else {
+              option.textContent = course;
+              if(firstPendingIndex === -1) firstPendingIndex = index;
+              pendingCount++;
+            }
+            courseSelect.appendChild(option);
+          });
+          
+          document.getElementById('totalCount').innerText = res.courses.length;
+          document.getElementById('submittedCount').innerText = res.submittedCourses.length;
+          document.getElementById('pendingCount').innerText = pendingCount;
+          
+          if(pendingCount === 0) {
+            document.getElementById('questionSection').classList.add('hidden');
+            document.getElementById('allDoneMsg').classList.remove('hidden');
+          } else {
+            document.getElementById('questionSection').classList.remove('hidden');
+            document.getElementById('allDoneMsg').classList.add('hidden');
+            if(firstPendingIndex !== -1) courseSelect.selectedIndex = firstPendingIndex;
+          }
+          document.getElementById('mainForm').classList.remove('hidden');
+        } else {
+          // คืนหน้าจอ Login กลับมาถ้าไม่พบข้อมูล
+          document.getElementById('loginSection').classList.remove('hidden');
+          errorEl.innerText = 'ไม่พบข้อมูลในระบบ กรุณาตรวจสอบรหัสอีกครั้ง';
+          errorEl.classList.remove('hidden');
+        }
+      }).catch(err => {
+        showLoading(false);
+        document.getElementById('loginSection').classList.remove('hidden');
+        alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err);
+      });
+    }
+
+    function getBase64(file) {
+      return new Promise((resolve, reject) => {
+        if(!file) resolve(null);
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    async function submitForm(event) {
+      event.preventDefault();
+      
+      const q1Status = document.getElementById('q1Status').value;
+      const q2Status = document.getElementById('q2Status').value;
+      const q3Status = document.getElementById('q3Status').value;
+
+      const q1File = document.getElementById('q1File').files[0];
+      const q2File = document.getElementById('q2File').files[0];
+      const q3File = document.getElementById('q3File').files[0];
+
+      const MAX_SIZE = 10485760; 
+
+      if(q1Status !== 'ยังไม่ได้ดำเนินการ') {
+        if(!document.getElementById('q1Detail').value || !q1File) return alert('กรุณากรอกข้อมูลและแนบไฟล์ข้อ 1 ให้ครบถ้วน');
+        if(q1File.size > MAX_SIZE) return alert('ไฟล์ข้อ 1 มีขนาดใหญ่เกิน 10MB กรุณาลดขนาดไฟล์');
+      }
+      if(q2Status !== 'ยังไม่ได้ดำเนินการ') {
+        if(!document.getElementById('q2Detail').value || !q2File) return alert('กรุณากรอกข้อมูลและแนบไฟล์ข้อ 2 ให้ครบถ้วน');
+        if(q2File.size > MAX_SIZE) return alert('ไฟล์ข้อ 2 มีขนาดใหญ่เกิน 10MB กรุณาลดขนาดไฟล์');
+      }
+      if(q3Status !== 'ยังไม่ได้ดำเนินการ') {
+        if(!document.getElementById('q3Detail').value || !q3File) return alert('กรุณากรอกข้อมูลและแนบไฟล์ข้อ 3 ให้ครบถ้วน');
+        if(q3File.size > MAX_SIZE) return alert('ไฟล์ข้อ 3 มีขนาดใหญ่เกิน 10MB กรุณาลดขนาดไฟล์');
+      }
+
+      showLoading(true, 'กำลังอัปโหลดไฟล์และบันทึกข้อมูล... (อาจใช้เวลาสักครู่)');
+      document.getElementById('mainForm').classList.add('hidden');
+
+      try {
+        const formData = {
+          userId: currentUserId,
+          userName: document.getElementById('userName').value,
+          course: document.getElementById('courseName').value,
+          q1Status: q1Status, q1Detail: document.getElementById('q1Detail').value,
+          q1FileData: await getBase64(q1File), q1FileName: q1File ? q1File.name : '',
+          q2Status: q2Status, q2Detail: document.getElementById('q2Detail').value,
+          q2FileData: await getBase64(q2File), q2FileName: q2File ? q2File.name : '',
+          q3Status: q3Status, q3Detail: document.getElementById('q3Detail').value,
+          q3FileData: await getBase64(q3File), q3FileName: q3File ? q3File.name : ''
+        };
+
+        fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'saveData', formData: formData })
+        })
+        .then(response => response.json())
+        .then(res => {
+          showLoading(false);
+          if(res.success) { document.getElementById('successMsg').classList.remove('hidden'); } 
+          else { alert('บันทึกไม่สำเร็จ: ' + res.error); document.getElementById('mainForm').classList.remove('hidden'); }
+        }).catch(err => {
+          showLoading(false);
+          alert('เกิดข้อผิดพลาด: ' + err); document.getElementById('mainForm').classList.remove('hidden');
+        });
+      } catch(e) {
+        showLoading(false);
+        alert('พบปัญหาในการประมวลผลไฟล์'); document.getElementById('mainForm').classList.remove('hidden');
+      }
+    }
+  </script>
+</body>
+</html>
