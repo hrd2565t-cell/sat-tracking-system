@@ -9,11 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style> 
     body { font-family: 'Sarabun', sans-serif; background-color: #f1f5f9; } 
-    .card { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); padding: 1.5rem; }
+    .card { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); padding: 1.5rem; overflow: hidden; }
     .section-title { font-size: 1.25rem; font-weight: 600; color: #1e293b; margin-bottom: 1rem; border-left: 4px solid #3b82f6; padding-left: 0.75rem; }
+    
+    /* ซ่อน Scrollbar แนวตั้งของตาราง */
+    .table-container::-webkit-scrollbar { width: 6px; height: 6px; }
+    .table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
   </style>
   
-  <!-- สคริปต์ตรวจสอบการ Login -->
   <script>
     if (sessionStorage.getItem('isAdminLoggedIn') !== 'true') {
       alert('ไม่อนุญาตให้เข้าถึง กรุณาเข้าสู่ระบบผ่านรหัส PIN ผู้ดูแลระบบ');
@@ -51,17 +54,17 @@
       <section>
         <h2 class="section-title">1. ภาพรวมการรายงานผล (Overview)</h2>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="card border-b-4 border-blue-500 relative overflow-hidden">
+          <div class="card border-b-4 border-blue-500 relative">
             <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-50 rounded-full z-0 opacity-50"></div>
             <p class="text-sm text-gray-500 mb-1 relative z-10">เป้าหมายทั้งหมด (รายหลักสูตร)</p>
             <h3 class="text-4xl font-bold text-gray-800 relative z-10" id="txtTotal">0</h3>
           </div>
-          <div class="card border-b-4 border-green-500 relative overflow-hidden">
+          <div class="card border-b-4 border-green-500 relative">
             <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-green-50 rounded-full z-0 opacity-50"></div>
             <p class="text-sm text-gray-500 mb-1 relative z-10">ตอบกลับมาแล้ว</p>
             <h3 class="text-4xl font-bold text-green-600 relative z-10" id="txtSubmitted">0</h3>
           </div>
-          <div class="card border-b-4 border-red-500 relative overflow-hidden">
+          <div class="card border-b-4 border-red-500 relative">
             <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-red-50 rounded-full z-0 opacity-50"></div>
             <p class="text-sm text-gray-500 mb-1 relative z-10">รอการตอบกลับ (Pending)</p>
             <h3 class="text-4xl font-bold text-red-500 relative z-10" id="txtPending">0</h3>
@@ -79,17 +82,24 @@
       <section>
         <h2 class="section-title">2. สรุปผลเป็นรายหลักสูตร</h2>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- ฝั่งซ้าย: กราฟแท่ง -->
-          <div class="card">
+          
+          <!-- ฝั่งซ้าย: กราฟแท่ง (เพิ่มระบบ Scroll ป้องกันกราฟทะลุ) -->
+          <div class="card flex flex-col">
             <h3 class="font-medium text-gray-700 mb-4 text-sm uppercase tracking-wider">กราฟเปรียบเทียบอัตราการส่งรายงาน</h3>
-            <canvas id="courseChart" height="250"></canvas>
+            <div class="w-full overflow-x-auto table-container flex-1">
+              <!-- บังคับความกว้างขั้นต่ำ 600px ถ้าจอเล็กกว่านี้จะเกิดเป็น Scrollbar แทน -->
+              <div style="min-width: 600px; height: 300px; position: relative;">
+                <canvas id="courseChart"></canvas>
+              </div>
+            </div>
           </div>
-          <!-- ฝั่งขวา: ตารางสรุปตัวเลข -->
+
+          <!-- ฝั่งขวา: ตารางสรุปตัวเลข (เพิ่ม Scroll กรณีหลักสูตรเยอะ) -->
           <div class="card flex flex-col">
             <h3 class="font-medium text-gray-700 mb-4 text-sm uppercase tracking-wider">ตารางสรุปจำนวนรายหลักสูตร</h3>
-            <div class="overflow-x-auto flex-1">
+            <div class="overflow-y-auto table-container" style="max-height: 300px;">
               <table class="w-full text-sm text-left">
-                <thead class="bg-gray-50 text-gray-600 border-b">
+                <thead class="bg-gray-50 text-gray-600 border-b sticky top-0 z-10">
                   <tr>
                     <th class="px-3 py-2">ชื่อหลักสูตร</th>
                     <th class="px-3 py-2 text-center">เป้าหมาย</th>
@@ -107,10 +117,10 @@
         </div>
       </section>
 
-      <!-- ================= PART 3: วิเคราะห์ข้อมูลการตอบกลับ (Response Analysis) ================= -->
+      <!-- ================= PART 3: วิเคราะห์ข้อมูลการตอบกลับ ================= -->
       <section>
         <h2 class="section-title">3. วิเคราะห์ข้อมูลการตอบกลับ (การนำไปใช้จริง)</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="card">
             <h3 class="font-medium text-blue-700 mb-2 text-sm">1. จัดทำโครงการพัฒนาองค์กร</h3>
             <div class="flex items-center gap-4 mb-4">
@@ -156,8 +166,8 @@
         </div>
       </section>
 
-      <!-- ================= PART 4: ระบบติดตามทวงถาม (Pending Tracking) ================= -->
-      <section class="card">
+      <!-- ================= PART 4: ระบบติดตามทวงถาม ================= -->
+      <section class="card !overflow-visible">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           <div>
             <h3 class="section-title mb-0 border-red-500 text-red-700">⚠️ รายชื่อบุคลากรที่ยังไม่รายงานผล (เพื่อติดตามทวงถาม)</h3>
@@ -166,14 +176,13 @@
           <div class="w-full md:w-64">
             <select id="filterCourse" onchange="filterPendingTable()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500">
               <option value="all">แสดงทุกหลักสูตร</option>
-              <!-- JS จะดึงรายชื่อหลักสูตรมาใส่ตรงนี้ -->
             </select>
           </div>
         </div>
         
-        <div class="overflow-x-auto border rounded-lg">
+        <div class="overflow-x-auto border rounded-lg table-container" style="max-height: 400px;">
           <table class="w-full text-sm text-left">
-            <thead class="bg-red-50 text-red-800 border-b border-red-100">
+            <thead class="bg-red-50 text-red-800 border-b border-red-100 sticky top-0 z-10">
               <tr>
                 <th class="px-4 py-3">รหัสประจำตัว</th>
                 <th class="px-4 py-3">ชื่อ-นามสกุล</th>
@@ -182,7 +191,6 @@
               </tr>
             </thead>
             <tbody id="pendingTableBody" class="divide-y divide-gray-100">
-              <!-- ข้อมูลจะถูกเติมด้วย JS -->
             </tbody>
           </table>
         </div>
@@ -194,9 +202,8 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbz2esdJeJCqTaY8TGrjoZmfv1mSy14jiGxbmSDyFA8jBoRMckOSHOcF6KspgbJbveT0Ug/exec';
 
-    // ตัวแปรเก็บกราฟเพื่อลบสร้างใหม่ได้
     let charts = {};
-    let allPendingUsers = []; // เก็บรายชื่อค้างส่งทั้งหมดไว้เพื่อทำระบบ Filter
+    let allPendingUsers = []; 
 
     function logoutAdmin() {
       sessionStorage.removeItem('isAdminLoggedIn');
@@ -225,7 +232,7 @@
       charts[canvasId] = new Chart(document.getElementById(canvasId), {
         type: 'doughnut',
         data: { datasets: [{ data: dataValues, backgroundColor: colors, borderWidth: 0 }] },
-        options: { cutout: '75%', plugins: { tooltip: { enabled: false }, legend: { display: false } } }
+        options: { cutout: '75%', plugins: { tooltip: { enabled: false }, legend: { display: false } }, maintainAspectRatio: false }
       });
     }
 
@@ -233,7 +240,6 @@
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('mainContent').classList.remove('hidden');
 
-      // 1. ภาพรวม
       const total = data.totalUsers;
       const submitted = data.totalSubmitted;
       const pending = total - submitted;
@@ -244,7 +250,6 @@
       document.getElementById('txtPending').innerText = pending;
       document.getElementById('txtPercent').innerText = percent;
 
-      // 2. สรุปรายหลักสูตร
       const courseNames = Object.keys(data.coursesData);
       const courseTotal = [];
       const courseSubmitted = [];
@@ -261,7 +266,6 @@
         const cPending = d.total - d.submitted;
         const cPercent = d.total > 0 ? Math.round((d.submitted / d.total) * 100) : 0;
 
-        // เติมตารางรายหลักสูตร
         tbodyCourse.innerHTML += `
           <tr class="hover:bg-gray-50">
             <td class="px-3 py-3 text-xs font-medium text-gray-800">${c}</td>
@@ -271,11 +275,9 @@
             <td class="px-3 py-3 text-right font-medium">${cPercent}%</td>
           </tr>
         `;
-        // เติม Dropdown สำหรับ Filter
         filterSelect.innerHTML += `<option value="${c}">${c.substring(0,40)}...</option>`;
       });
 
-      // วาดกราฟแท่งหลักสูตร
       const shortLabels = courseNames.map(c => c.substring(0, 15) + '...');
       if (charts['courseChart']) charts['courseChart'].destroy();
       charts['courseChart'] = new Chart(document.getElementById('courseChart'), {
@@ -290,19 +292,17 @@
         options: { 
           responsive: true, maintainAspectRatio: false,
           scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } } },
-          plugins: { tooltip: { callbacks: { title: (ctx) => courseNames[ctx[0].dataIndex] } } } // โชว์ชื่อเต็มตอนชี้เมาส์
+          plugins: { tooltip: { callbacks: { title: (ctx) => courseNames[ctx[0].dataIndex] } } } 
         }
       });
 
-      // 3. วิเคราะห์ข้อมูลการตอบกลับ (สมมติตัวเลขจากการที่ API ส่งมา หรือคำนวณคร่าวๆ)
-      // *เนื่องจาก API เดิมส่งมาแค่ Done รวม เราจะคำนวณเปอร์เซ็นต์โชว์เป็นกราฟโดนัทเทียบกับคนที่ส่งแล้ว
       const q1Done = data.qStats.q1;
       const q2Done = data.qStats.q2;
       const q3Done = data.qStats.q3;
 
       document.getElementById('q1Total').innerHTML = `${q1Done} <span class="text-sm font-normal text-gray-500">/ ${submitted}</span>`;
       document.getElementById('q1Done').innerText = q1Done; 
-      document.getElementById('q1Doing').innerText = "-"; // (API เดิมไม่ได้แยกสถานะ กำลังทำ/ทำเสร็จ)
+      document.getElementById('q1Doing').innerText = "-"; 
 
       document.getElementById('q2Total').innerHTML = `${q2Done} <span class="text-sm font-normal text-gray-500">/ ${submitted}</span>`;
       document.getElementById('q2Done').innerText = q2Done;
@@ -310,16 +310,14 @@
       document.getElementById('q3Total').innerHTML = `${q3Done} <span class="text-sm font-normal text-gray-500">/ ${submitted}</span>`;
       document.getElementById('q3Done').innerText = q3Done;
 
-      createDoughnutChart('q1Chart', [q1Done, submitted - q1Done], ['#2563eb', '#e2e8f0']);
-      createDoughnutChart('q2Chart', [q2Done, submitted - q2Done], ['#10b981', '#e2e8f0']);
-      createDoughnutChart('q3Chart', [q3Done, submitted - q3Done], ['#8b5cf6', '#e2e8f0']);
+      createDoughnutChart('q1Chart', [q1Done, submitted - q1Done > 0 ? submitted - q1Done : 0], ['#2563eb', '#e2e8f0']);
+      createDoughnutChart('q2Chart', [q2Done, submitted - q2Done > 0 ? submitted - q2Done : 0], ['#10b981', '#e2e8f0']);
+      createDoughnutChart('q3Chart', [q3Done, submitted - q3Done > 0 ? submitted - q3Done : 0], ['#8b5cf6', '#e2e8f0']);
 
-      // 4. รายชื่อค้างส่ง (เก็บลงตัวแปร Global เพื่อให้ Filter ได้)
       allPendingUsers = data.pendingUsers;
-      filterPendingTable(); // เรียกฟังก์ชันแสดงตาราง
+      filterPendingTable(); 
     }
 
-    // ฟังก์ชันกรองตารางรายชื่อค้างส่ง
     function filterPendingTable() {
       const selectedCourse = document.getElementById('filterCourse').value;
       const tbody = document.getElementById('pendingTableBody');
