@@ -15,6 +15,9 @@
     
     .table-container::-webkit-scrollbar { width: 6px; height: 6px; }
     .table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+    /* คลาสสำหรับใช้แบ่งหน้า PDF */
+    .pdf-page-break { page-break-before: always; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #cbd5e1; }
   </style>
   
   <script>
@@ -24,7 +27,7 @@
     }
   </script>
 </head>
-<body class="text-gray-800 p-4 sm:p-6 lg:p-8">
+<body class="text-gray-800 p-4 sm:p-6 lg:p-8 relative">
   
   <div class="max-w-7xl mx-auto">
     <!-- Header -->
@@ -38,8 +41,8 @@
         <button onclick="loadDashboard()" class="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow flex justify-center items-center gap-2">
           🔄 รีเฟรชข้อมูล
         </button>
-        <!-- ปุ่มโหลด PDF -->
-        <button onclick="exportToPDF()" class="flex-1 md:flex-none bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow flex justify-center items-center gap-2 font-medium">
+        <!-- เปลี่ยนปุ่มให้เปิดหน้าต่างตั้งค่าแทน -->
+        <button onclick="openPrintModal()" class="flex-1 md:flex-none bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow flex justify-center items-center gap-2 font-medium">
           📥 ส่งออกเป็น PDF
         </button>
       </div>
@@ -54,10 +57,9 @@
     <!-- กล่องหลักสำหรับทำ PDF -->
     <div id="mainContent" class="hidden bg-slate-50 p-6 rounded-xl">
       
-      <!-- [PDF หน้าที่ 1] ============================================== -->
       <div class="space-y-8">
-        <!-- PART 1: ภาพรวม -->
-        <section>
+        <!-- ================= PART 1: ภาพรวม ================= -->
+        <section id="part1">
           <h2 class="section-title">1. ภาพรวมการรายงานผล (Overview)</h2>
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="card border-b-4 border-blue-500 relative">
@@ -84,8 +86,11 @@
           </div>
         </section>
 
-        <!-- PART 2: สรุปผลรายหลักสูตร -->
-        <section>
+        <!-- ตัวตัดหน้าก่อนข้อ 2 -->
+        <div id="pb2"></div>
+
+        <!-- ================= PART 2: สรุปผลรายหลักสูตร ================= -->
+        <section id="part2">
           <h2 class="section-title">2. สรุปผลเป็นรายหลักสูตร</h2>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="card flex flex-col">
@@ -117,15 +122,12 @@
             </div>
           </div>
         </section>
-      </div>
 
-      <!-- เส้นตัดแบ่งหน้าสำหรับ PDF (จะทำงานเมื่อสั่งปรินต์เท่านั้น) -->
-      <div class="page-break" style="page-break-before: always; margin-top: 2rem;"></div>
+        <!-- ตัวตัดหน้าก่อนข้อ 3 -->
+        <div id="pb3"></div>
 
-      <!-- [PDF หน้าที่ 2] ============================================== -->
-      <div class="space-y-8 mt-8">
-        <!-- PART 3: วิเคราะห์ข้อมูลการตอบกลับ -->
-        <section>
+        <!-- ================= PART 3: วิเคราะห์ข้อมูล ================= -->
+        <section id="part3">
           <h2 class="section-title">3. วิเคราะห์ข้อมูลการตอบกลับ (การนำไปใช้จริง)</h2>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="card">
@@ -173,8 +175,11 @@
           </div>
         </section>
 
-        <!-- PART 4: ระบบติดตามทวงถาม -->
-        <section class="card !overflow-visible">
+        <!-- ตัวตัดหน้าก่อนข้อ 4 -->
+        <div id="pb4"></div>
+
+        <!-- ================= PART 4: ระบบติดตามทวงถาม ================= -->
+        <section id="part4" class="card !overflow-visible">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
             <div>
               <h3 class="section-title mb-0 border-red-500 text-red-700">⚠️ รายชื่อบุคลากรที่ยังไม่รายงานผล (เพื่อติดตามทวงถาม)</h3>
@@ -204,6 +209,38 @@
         </section>
       </div>
       
+    </div>
+  </div>
+
+  <!-- Modal สำหรับตั้งค่าการปริ้น PDF -->
+  <div id="printModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity">
+    <div class="bg-white rounded-2xl p-6 sm:p-8 max-w-lg w-full mx-4 shadow-2xl transform transition-all">
+      <h3 class="text-xl font-bold text-gray-800 mb-2 border-b pb-3">⚙️ ตั้งค่าการแบ่งหน้า (Page Break)</h3>
+      <p class="text-sm text-gray-600 mb-6">กรุณาเลือกจุดที่คุณต้องการให้ระบบ <b>"ขึ้นหน้าใหม่"</b> ในไฟล์ PDF เพื่อป้องกันข้อมูลขาดหาย:</p>
+      
+      <div class="space-y-4 mb-8">
+        <label class="flex items-center gap-3 cursor-pointer p-3 border rounded-lg hover:bg-gray-50 transition">
+          <input type="checkbox" id="chkPb2" class="w-5 h-5 text-blue-600 rounded">
+          <span class="text-gray-700 font-medium">ตัดขึ้นหน้าใหม่ ก่อนขึ้น <span class="text-blue-600">ข้อ 2. (กราฟรายหลักสูตร)</span></span>
+        </label>
+        
+        <label class="flex items-center gap-3 cursor-pointer p-3 border rounded-lg hover:bg-gray-50 transition">
+          <input type="checkbox" id="chkPb3" class="w-5 h-5 text-blue-600 rounded" checked>
+          <span class="text-gray-700 font-medium">ตัดขึ้นหน้าใหม่ ก่อนขึ้น <span class="text-blue-600">ข้อ 3. (วิเคราะห์ข้อมูลโดนัท)</span></span>
+        </label>
+        
+        <label class="flex items-center gap-3 cursor-pointer p-3 border rounded-lg hover:bg-gray-50 transition">
+          <input type="checkbox" id="chkPb4" class="w-5 h-5 text-blue-600 rounded" checked>
+          <span class="text-gray-700 font-medium">ตัดขึ้นหน้าใหม่ ก่อนขึ้น <span class="text-red-600">ข้อ 4. (รายชื่อคนค้างส่ง)</span></span>
+        </label>
+      </div>
+      
+      <div class="flex gap-3 justify-end">
+        <button onclick="closePrintModal()" class="px-5 py-2.5 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition">ยกเลิก</button>
+        <button onclick="executeExport()" class="px-5 py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition shadow-lg flex items-center gap-2">
+          📥 ยืนยันและสร้าง PDF
+        </button>
+      </div>
     </div>
   </div>
 
@@ -352,34 +389,52 @@
       }
     }
 
-    // ฟังก์ชันสร้างไฟล์ PDF
-    function exportToPDF() {
+    // ฟังก์ชันเปิด-ปิด หน้าต่างตั้งค่าการพิมพ์
+    function openPrintModal() {
+      document.getElementById('printModal').classList.remove('hidden');
+    }
+    function closePrintModal() {
+      document.getElementById('printModal').classList.add('hidden');
+    }
+
+    // ฟังก์ชันสร้างไฟล์ PDF ตามค่าที่เลือก
+    function executeExport() {
+      closePrintModal(); // ปิดหน้าต่าง
+      
       const element = document.getElementById('mainContent');
       
-      // ปลดล็อกความสูงตาราง
+      // 1. จัดการตัวตัดหน้าตาม Checkbox ที่เลือก
+      document.getElementById('pb2').className = document.getElementById('chkPb2').checked ? 'pdf-page-break' : '';
+      document.getElementById('pb3').className = document.getElementById('chkPb3').checked ? 'pdf-page-break' : '';
+      document.getElementById('pb4').className = document.getElementById('chkPb4').checked ? 'pdf-page-break' : '';
+
+      // 2. ปลดล็อกความสูงตาราง ให้ข้อมูลแสดงครบทุกบรรทัด
       const table1 = document.getElementById('scrollTable1');
       const table2 = document.getElementById('scrollTable2');
       table1.style.maxHeight = 'none';
       table2.style.maxHeight = 'none';
       
-      // ซ่อน Filter
+      // ซ่อน Filter ไม่ให้ติดไปใน PDF
       document.getElementById('filterSection').style.display = 'none';
 
-      // ตั้งค่าขนาดและความคมชัดของ PDF (เปลี่ยนเป็น A4 แนวนอน - landscape)
+      // ตั้งค่าขนาด PDF แนวนอน (Landscape) และ สั่งห้ามตัดครึ่งบรรทัดตาราง (avoid: 'tr')
       const opt = {
-        margin:       [0.3, 0.3, 0.3, 0.3], 
+        margin:       [0.4, 0.4, 0.4, 0.4], 
         filename:     'รายงานสรุปผล_กกท.pdf',
         image:        { type: 'jpeg', quality: 0.98 }, 
-        html2canvas:  { scale: 2, useCORS: true, windowWidth: 1400 }, // ขยายความกว้างจำลองเพื่อรองรับแนวนอน
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }, // ตั้งค่าเป็น Landscape
-        pagebreak:    { mode: ['css', 'legacy'] } // แจ้งให้ระบบประมวลผลตัวแบ่งหน้า (page-break)
+        html2canvas:  { scale: 2, useCORS: true, windowWidth: 1200 }, 
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }, 
+        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.card'] } // ✨ ป้องกันการตัดครึ่งบรรทัดตาราง
       };
 
       html2pdf().set(opt).from(element).save().then(() => {
-        // คืนค่าตารางและ Filter
+        // คืนค่าตารางและล้างตัวตัดหน้ากลับเป็นปกติ
         table1.style.maxHeight = '300px';
         table2.style.maxHeight = '400px';
         document.getElementById('filterSection').style.display = 'block';
+        document.getElementById('pb2').className = '';
+        document.getElementById('pb3').className = '';
+        document.getElementById('pb4').className = '';
       });
     }
 
