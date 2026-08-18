@@ -6,6 +6,8 @@
   <title>Admin Dashboard - ระบบติดตามผล กกท.</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- เพิ่ม Library สำหรับแปลง HTML เป็น PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style> 
     body { font-family: 'Sarabun', sans-serif; background-color: #f1f5f9; } 
@@ -31,13 +33,16 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 bg-white p-6 rounded-xl shadow-sm border-t-4 border-blue-800">
       <div>
         <h1 class="text-2xl font-bold text-blue-900 mb-1">📊 Dashboard วิเคราะห์ผลการปฏิบัติหน้าที่</h1>
-        <p class="text-sm text-gray-500">โครงการพัฒนาบุคลากรโดยการกีฬาแห่งประเทศไทย(งบประมาณกองทุนฯ)</p>
+        <p class="text-sm text-gray-500">โครงการเพิ่มศักยภาพในการบริหารจัดการกีฬาไปสู่ความเป็นเลิศ (การกีฬาแห่งประเทศไทย)</p>
       </div>
-      <div class="flex gap-2 w-full md:w-auto">
+      <div class="flex flex-wrap gap-2 w-full md:w-auto">
         <button onclick="logoutAdmin()" class="flex-1 md:flex-none bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-100 transition font-medium">ออกจากระบบ</button>
         <button onclick="loadDashboard()" class="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow flex justify-center items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-          รีเฟรชข้อมูล
+          🔄 รีเฟรชข้อมูล
+        </button>
+        <!-- เพิ่มปุ่มโหลด PDF -->
+        <button onclick="exportToPDF()" class="flex-1 md:flex-none bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow flex justify-center items-center gap-2 font-medium">
+          📥 ส่งออกเป็น PDF
         </button>
       </div>
     </div>
@@ -48,7 +53,8 @@
       <p class="text-blue-600 font-medium">กำลังดึงข้อมูลและประมวลผลจากฐานข้อมูล...</p>
     </div>
 
-    <div id="mainContent" class="hidden space-y-8">
+    <!-- ส่วนนี้คือกล่องข้อมูลที่จะถูกถ่ายภาพเป็น PDF -->
+    <div id="mainContent" class="hidden space-y-8 bg-slate-50 p-4 rounded-xl">
       
       <!-- ================= PART 1: ภาพรวม (Overview) ================= -->
       <section>
@@ -83,21 +89,18 @@
         <h2 class="section-title">2. สรุปผลเป็นรายหลักสูตร</h2>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          <!-- ฝั่งซ้าย: กราฟแท่ง (เพิ่มระบบ Scroll ป้องกันกราฟทะลุ) -->
           <div class="card flex flex-col">
             <h3 class="font-medium text-gray-700 mb-4 text-sm uppercase tracking-wider">กราฟเปรียบเทียบอัตราการส่งรายงาน</h3>
             <div class="w-full overflow-x-auto table-container flex-1">
-              <!-- บังคับความกว้างขั้นต่ำ 600px ถ้าจอเล็กกว่านี้จะเกิดเป็น Scrollbar แทน -->
-              <div style="min-width: 600px; height: 300px; position: relative;">
+              <div style="min-width: 500px; height: 300px; position: relative;">
                 <canvas id="courseChart"></canvas>
               </div>
             </div>
           </div>
 
-          <!-- ฝั่งขวา: ตารางสรุปตัวเลข (เพิ่ม Scroll กรณีหลักสูตรเยอะ) -->
           <div class="card flex flex-col">
             <h3 class="font-medium text-gray-700 mb-4 text-sm uppercase tracking-wider">ตารางสรุปจำนวนรายหลักสูตร</h3>
-            <div class="overflow-y-auto table-container" style="max-height: 300px;">
+            <div class="overflow-y-auto table-container" id="scrollTable1" style="max-height: 300px;">
               <table class="w-full text-sm text-left">
                 <thead class="bg-gray-50 text-gray-600 border-b sticky top-0 z-10">
                   <tr>
@@ -109,7 +112,6 @@
                   </tr>
                 </thead>
                 <tbody id="courseTableBody" class="divide-y divide-gray-100">
-                  <!-- JS แทรกข้อมูลที่นี่ -->
                 </tbody>
               </table>
             </div>
@@ -172,15 +174,15 @@
           <div>
             <h3 class="section-title mb-0 border-red-500 text-red-700">⚠️ รายชื่อบุคลากรที่ยังไม่รายงานผล (เพื่อติดตามทวงถาม)</h3>
           </div>
-          <!-- ระบบ Filter -->
-          <div class="w-full md:w-64">
-            <select id="filterCourse" onchange="filterPendingTable()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500">
+          <!-- ระบบ Filter (จะซ่อนตอนปรินต์ PDF) -->
+          <div id="filterSection" class="w-full md:w-64">
+            <select id="filterCourse" onchange="filterPendingTable()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500 bg-white">
               <option value="all">แสดงทุกหลักสูตร</option>
             </select>
           </div>
         </div>
         
-        <div class="overflow-x-auto border rounded-lg table-container" style="max-height: 400px;">
+        <div class="overflow-x-auto border rounded-lg table-container" id="scrollTable2" style="max-height: 400px;">
           <table class="w-full text-sm text-left">
             <thead class="bg-red-50 text-red-800 border-b border-red-100 sticky top-0 z-10">
               <tr>
@@ -267,9 +269,9 @@
         const cPercent = d.total > 0 ? Math.round((d.submitted / d.total) * 100) : 0;
 
         tbodyCourse.innerHTML += `
-          <tr class="hover:bg-gray-50">
+          <tr class="bg-white border-b border-gray-100">
             <td class="px-3 py-3 text-xs font-medium text-gray-800">${c}</td>
-            <td class="px-3 py-3 text-center bg-gray-50">${d.total}</td>
+            <td class="px-3 py-3 text-center text-gray-600">${d.total}</td>
             <td class="px-3 py-3 text-center text-green-600 font-bold">${d.submitted}</td>
             <td class="px-3 py-3 text-center text-red-500">${cPending}</td>
             <td class="px-3 py-3 text-right font-medium">${cPercent}%</td>
@@ -329,11 +331,11 @@
       }
 
       if(filteredUsers.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">🎉 ไม่มีผู้ค้างส่งในหมวดหมู่นี้</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500 bg-white">🎉 ไม่มีผู้ค้างส่งในหมวดหมู่นี้</td></tr>`;
       } else {
         filteredUsers.forEach(u => {
           tbody.innerHTML += `
-            <tr class="hover:bg-red-50/50 transition">
+            <tr class="bg-white border-b border-gray-100">
               <td class="px-4 py-3 font-mono text-gray-600">${u.id}</td>
               <td class="px-4 py-3 font-medium text-gray-800">${u.name}</td>
               <td class="px-4 py-3 text-gray-500 text-xs">${u.org}</td>
@@ -342,6 +344,37 @@
           `;
         });
       }
+    }
+
+    // ฟังก์ชันสร้างไฟล์ PDF
+    function exportToPDF() {
+      const element = document.getElementById('mainContent');
+      
+      // 1. ปลดล็อกความสูงตารางชั่วคราวเพื่อให้ข้อมูลออกมาครบทุกบรรทัด
+      const table1 = document.getElementById('scrollTable1');
+      const table2 = document.getElementById('scrollTable2');
+      table1.style.maxHeight = 'none';
+      table2.style.maxHeight = 'none';
+      
+      // 2. ซ่อนกล่อง Filter ค้นหาชั่วคราวเพราะไม่จำเป็นต้องมีใน PDF
+      document.getElementById('filterSection').style.display = 'none';
+
+      // ตั้งค่าขนาดและความคมชัดของ PDF
+      const opt = {
+        margin:       [0.3, 0.3, 0.3, 0.3], // ขอบหน้ากระดาษ (นิ้ว)
+        filename:     'รายงานสรุปผลการปฏิบัติหน้าที่_กกท.pdf',
+        image:        { type: 'jpeg', quality: 0.98 }, // คุณภาพรูปกราฟ
+        html2canvas:  { scale: 2, useCORS: true, windowWidth: 1200 }, // ล็อกความกว้างหน้าจอ ป้องกันการจัดเรียงพังแบบมือถือ
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' } // แนวตั้ง ขนาด A4
+      };
+
+      // เริ่มถ่ายภาพและเซฟ PDF
+      html2pdf().set(opt).from(element).save().then(() => {
+        // 3. เมื่อเซฟเสร็จ คืนค่าความสูงและกรอบกลับมาให้หน้าเว็บใช้งานได้ปกติ
+        table1.style.maxHeight = '300px';
+        table2.style.maxHeight = '400px';
+        document.getElementById('filterSection').style.display = 'block';
+      });
     }
 
     window.onload = loadDashboard;
