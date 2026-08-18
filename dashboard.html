@@ -6,7 +6,6 @@
   <title>Admin Dashboard - ระบบติดตามผล กกท.</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- เพิ่ม Library สำหรับแปลง HTML เป็น PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style> 
@@ -14,7 +13,6 @@
     .card { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); padding: 1.5rem; overflow: hidden; }
     .section-title { font-size: 1.25rem; font-weight: 600; color: #1e293b; margin-bottom: 1rem; border-left: 4px solid #3b82f6; padding-left: 0.75rem; }
     
-    /* ซ่อน Scrollbar แนวตั้งของตาราง */
     .table-container::-webkit-scrollbar { width: 6px; height: 6px; }
     .table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
   </style>
@@ -40,7 +38,7 @@
         <button onclick="loadDashboard()" class="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow flex justify-center items-center gap-2">
           🔄 รีเฟรชข้อมูล
         </button>
-        <!-- เพิ่มปุ่มโหลด PDF -->
+        <!-- ปุ่มโหลด PDF -->
         <button onclick="exportToPDF()" class="flex-1 md:flex-none bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow flex justify-center items-center gap-2 font-medium">
           📥 ส่งออกเป็น PDF
         </button>
@@ -53,151 +51,159 @@
       <p class="text-blue-600 font-medium">กำลังดึงข้อมูลและประมวลผลจากฐานข้อมูล...</p>
     </div>
 
-    <!-- ส่วนนี้คือกล่องข้อมูลที่จะถูกถ่ายภาพเป็น PDF -->
-    <div id="mainContent" class="hidden space-y-8 bg-slate-50 p-4 rounded-xl">
+    <!-- กล่องหลักสำหรับทำ PDF -->
+    <div id="mainContent" class="hidden bg-slate-50 p-6 rounded-xl">
       
-      <!-- ================= PART 1: ภาพรวม (Overview) ================= -->
-      <section>
-        <h2 class="section-title">1. ภาพรวมการรายงานผล (Overview)</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="card border-b-4 border-blue-500 relative">
-            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-50 rounded-full z-0 opacity-50"></div>
-            <p class="text-sm text-gray-500 mb-1 relative z-10">เป้าหมายทั้งหมด (รายหลักสูตร)</p>
-            <h3 class="text-4xl font-bold text-gray-800 relative z-10" id="txtTotal">0</h3>
-          </div>
-          <div class="card border-b-4 border-green-500 relative">
-            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-green-50 rounded-full z-0 opacity-50"></div>
-            <p class="text-sm text-gray-500 mb-1 relative z-10">ตอบกลับมาแล้ว</p>
-            <h3 class="text-4xl font-bold text-green-600 relative z-10" id="txtSubmitted">0</h3>
-          </div>
-          <div class="card border-b-4 border-red-500 relative">
-            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-red-50 rounded-full z-0 opacity-50"></div>
-            <p class="text-sm text-gray-500 mb-1 relative z-10">รอการตอบกลับ (Pending)</p>
-            <h3 class="text-4xl font-bold text-red-500 relative z-10" id="txtPending">0</h3>
-          </div>
-          <div class="card bg-blue-800 text-white flex flex-col justify-center items-center text-center">
-            <p class="text-blue-200 text-sm mb-1">ความคืบหน้าภาพรวม</p>
-            <div class="flex items-end gap-1">
-              <h3 class="text-5xl font-bold" id="txtPercent">0</h3><span class="text-2xl mb-1">%</span>
+      <!-- [PDF หน้าที่ 1] ============================================== -->
+      <div class="space-y-8">
+        <!-- PART 1: ภาพรวม -->
+        <section>
+          <h2 class="section-title">1. ภาพรวมการรายงานผล (Overview)</h2>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="card border-b-4 border-blue-500 relative">
+              <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-50 rounded-full z-0 opacity-50"></div>
+              <p class="text-sm text-gray-500 mb-1 relative z-10">เป้าหมายทั้งหมด (รายหลักสูตร)</p>
+              <h3 class="text-4xl font-bold text-gray-800 relative z-10" id="txtTotal">0</h3>
+            </div>
+            <div class="card border-b-4 border-green-500 relative">
+              <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-green-50 rounded-full z-0 opacity-50"></div>
+              <p class="text-sm text-gray-500 mb-1 relative z-10">ตอบกลับมาแล้ว</p>
+              <h3 class="text-4xl font-bold text-green-600 relative z-10" id="txtSubmitted">0</h3>
+            </div>
+            <div class="card border-b-4 border-red-500 relative">
+              <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-red-50 rounded-full z-0 opacity-50"></div>
+              <p class="text-sm text-gray-500 mb-1 relative z-10">รอการตอบกลับ (Pending)</p>
+              <h3 class="text-4xl font-bold text-red-500 relative z-10" id="txtPending">0</h3>
+            </div>
+            <div class="card bg-blue-800 text-white flex flex-col justify-center items-center text-center">
+              <p class="text-blue-200 text-sm mb-1">ความคืบหน้าภาพรวม</p>
+              <div class="flex items-end gap-1">
+                <h3 class="text-5xl font-bold" id="txtPercent">0</h3><span class="text-2xl mb-1">%</span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- ================= PART 2: สรุปผลรายหลักสูตร (Course Summary) ================= -->
-      <section>
-        <h2 class="section-title">2. สรุปผลเป็นรายหลักสูตร</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- PART 2: สรุปผลรายหลักสูตร -->
+        <section>
+          <h2 class="section-title">2. สรุปผลเป็นรายหลักสูตร</h2>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="card flex flex-col">
+              <h3 class="font-medium text-gray-700 mb-4 text-sm uppercase tracking-wider">กราฟเปรียบเทียบอัตราการส่งรายงาน</h3>
+              <div class="w-full overflow-x-auto table-container flex-1">
+                <div style="min-width: 500px; height: 300px; position: relative;">
+                  <canvas id="courseChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="card flex flex-col">
+              <h3 class="font-medium text-gray-700 mb-4 text-sm uppercase tracking-wider">ตารางสรุปจำนวนรายหลักสูตร</h3>
+              <div class="overflow-y-auto table-container" id="scrollTable1" style="max-height: 300px;">
+                <table class="w-full text-sm text-left">
+                  <thead class="bg-gray-50 text-gray-600 border-b sticky top-0 z-10">
+                    <tr>
+                      <th class="px-3 py-2">ชื่อหลักสูตร</th>
+                      <th class="px-3 py-2 text-center">เป้าหมาย</th>
+                      <th class="px-3 py-2 text-center text-green-600">ส่งแล้ว</th>
+                      <th class="px-3 py-2 text-center text-red-500">ค้างส่ง</th>
+                      <th class="px-3 py-2 text-right">คิดเป็น (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="courseTableBody" class="divide-y divide-gray-100">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- เส้นตัดแบ่งหน้าสำหรับ PDF (จะทำงานเมื่อสั่งปรินต์เท่านั้น) -->
+      <div class="page-break" style="page-break-before: always; margin-top: 2rem;"></div>
+
+      <!-- [PDF หน้าที่ 2] ============================================== -->
+      <div class="space-y-8 mt-8">
+        <!-- PART 3: วิเคราะห์ข้อมูลการตอบกลับ -->
+        <section>
+          <h2 class="section-title">3. วิเคราะห์ข้อมูลการตอบกลับ (การนำไปใช้จริง)</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="card">
+              <h3 class="font-medium text-blue-700 mb-2 text-sm">1. จัดทำโครงการพัฒนาองค์กร</h3>
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-16 h-16"><canvas id="q1Chart"></canvas></div>
+                <div>
+                  <p class="text-xs text-gray-500">รายงานข้อมูลแล้วรวม</p>
+                  <p class="text-xl font-bold text-gray-800" id="q1Total">0 <span class="text-sm font-normal">รายการ</span></p>
+                </div>
+              </div>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between items-center"><span class="text-green-600">● ดำเนินการเสร็จแล้ว</span><span class="font-medium" id="q1Done">0</span></div>
+                <div class="flex justify-between items-center"><span class="text-yellow-500">● กำลังดำเนินการ</span><span class="font-medium" id="q1Doing">0</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 class="font-medium text-emerald-600 mb-2 text-sm">2. เป็นวิทยากรถ่ายทอดความรู้</h3>
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-16 h-16"><canvas id="q2Chart"></canvas></div>
+                <div>
+                  <p class="text-xs text-gray-500">รายงานข้อมูลแล้วรวม</p>
+                  <p class="text-xl font-bold text-gray-800" id="q2Total">0 <span class="text-sm font-normal">รายการ</span></p>
+                </div>
+              </div>
+               <div class="space-y-2 text-sm">
+                <div class="flex justify-between items-center"><span class="text-emerald-500">● ดำเนินการแล้ว</span><span class="font-medium" id="q2Done">0</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 class="font-medium text-purple-600 mb-2 text-sm">3. จัดแข่งระดับชาติ/นานาชาติ</h3>
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-16 h-16"><canvas id="q3Chart"></canvas></div>
+                <div>
+                  <p class="text-xs text-gray-500">รายงานข้อมูลแล้วรวม</p>
+                  <p class="text-xl font-bold text-gray-800" id="q3Total">0 <span class="text-sm font-normal">รายการ</span></p>
+                </div>
+              </div>
+               <div class="space-y-2 text-sm">
+                <div class="flex justify-between items-center"><span class="text-purple-500">● ดำเนินการแล้ว</span><span class="font-medium" id="q3Done">0</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PART 4: ระบบติดตามทวงถาม -->
+        <section class="card !overflow-visible">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+            <div>
+              <h3 class="section-title mb-0 border-red-500 text-red-700">⚠️ รายชื่อบุคลากรที่ยังไม่รายงานผล (เพื่อติดตามทวงถาม)</h3>
+            </div>
+            <!-- ระบบ Filter -->
+            <div id="filterSection" class="w-full md:w-64">
+              <select id="filterCourse" onchange="filterPendingTable()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500 bg-white">
+                <option value="all">แสดงทุกหลักสูตร</option>
+              </select>
+            </div>
+          </div>
           
-          <div class="card flex flex-col">
-            <h3 class="font-medium text-gray-700 mb-4 text-sm uppercase tracking-wider">กราฟเปรียบเทียบอัตราการส่งรายงาน</h3>
-            <div class="w-full overflow-x-auto table-container flex-1">
-              <div style="min-width: 500px; height: 300px; position: relative;">
-                <canvas id="courseChart"></canvas>
-              </div>
-            </div>
+          <div class="overflow-x-auto border rounded-lg table-container" id="scrollTable2" style="max-height: 400px;">
+            <table class="w-full text-sm text-left">
+              <thead class="bg-red-50 text-red-800 border-b border-red-100 sticky top-0 z-10">
+                <tr>
+                  <th class="px-4 py-3">รหัสประจำตัว</th>
+                  <th class="px-4 py-3">ชื่อ-นามสกุล</th>
+                  <th class="px-4 py-3">หน่วยงาน</th>
+                  <th class="px-4 py-3">หลักสูตรที่ค้างส่ง</th>
+                </tr>
+              </thead>
+              <tbody id="pendingTableBody" class="divide-y divide-gray-100">
+              </tbody>
+            </table>
           </div>
-
-          <div class="card flex flex-col">
-            <h3 class="font-medium text-gray-700 mb-4 text-sm uppercase tracking-wider">ตารางสรุปจำนวนรายหลักสูตร</h3>
-            <div class="overflow-y-auto table-container" id="scrollTable1" style="max-height: 300px;">
-              <table class="w-full text-sm text-left">
-                <thead class="bg-gray-50 text-gray-600 border-b sticky top-0 z-10">
-                  <tr>
-                    <th class="px-3 py-2">ชื่อหลักสูตร</th>
-                    <th class="px-3 py-2 text-center">เป้าหมาย</th>
-                    <th class="px-3 py-2 text-center text-green-600">ส่งแล้ว</th>
-                    <th class="px-3 py-2 text-center text-red-500">ค้างส่ง</th>
-                    <th class="px-3 py-2 text-right">คิดเป็น (%)</th>
-                  </tr>
-                </thead>
-                <tbody id="courseTableBody" class="divide-y divide-gray-100">
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= PART 3: วิเคราะห์ข้อมูลการตอบกลับ ================= -->
-      <section>
-        <h2 class="section-title">3. วิเคราะห์ข้อมูลการตอบกลับ (การนำไปใช้จริง)</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="card">
-            <h3 class="font-medium text-blue-700 mb-2 text-sm">1. จัดทำโครงการพัฒนาองค์กร</h3>
-            <div class="flex items-center gap-4 mb-4">
-              <div class="w-16 h-16"><canvas id="q1Chart"></canvas></div>
-              <div>
-                <p class="text-xs text-gray-500">รายงานข้อมูลแล้วรวม</p>
-                <p class="text-xl font-bold text-gray-800" id="q1Total">0 <span class="text-sm font-normal">รายการ</span></p>
-              </div>
-            </div>
-            <div class="space-y-2 text-sm">
-              <div class="flex justify-between items-center"><span class="text-green-600">● ดำเนินการเสร็จแล้ว</span><span class="font-medium" id="q1Done">0</span></div>
-              <div class="flex justify-between items-center"><span class="text-yellow-500">● กำลังดำเนินการ</span><span class="font-medium" id="q1Doing">0</span></div>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3 class="font-medium text-emerald-600 mb-2 text-sm">2. เป็นวิทยากรถ่ายทอดความรู้</h3>
-            <div class="flex items-center gap-4 mb-4">
-              <div class="w-16 h-16"><canvas id="q2Chart"></canvas></div>
-              <div>
-                <p class="text-xs text-gray-500">รายงานข้อมูลแล้วรวม</p>
-                <p class="text-xl font-bold text-gray-800" id="q2Total">0 <span class="text-sm font-normal">รายการ</span></p>
-              </div>
-            </div>
-             <div class="space-y-2 text-sm">
-              <div class="flex justify-between items-center"><span class="text-emerald-500">● ดำเนินการแล้ว</span><span class="font-medium" id="q2Done">0</span></div>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3 class="font-medium text-purple-600 mb-2 text-sm">3. จัดแข่งระดับชาติ/นานาชาติ</h3>
-            <div class="flex items-center gap-4 mb-4">
-              <div class="w-16 h-16"><canvas id="q3Chart"></canvas></div>
-              <div>
-                <p class="text-xs text-gray-500">รายงานข้อมูลแล้วรวม</p>
-                <p class="text-xl font-bold text-gray-800" id="q3Total">0 <span class="text-sm font-normal">รายการ</span></p>
-              </div>
-            </div>
-             <div class="space-y-2 text-sm">
-              <div class="flex justify-between items-center"><span class="text-purple-500">● ดำเนินการแล้ว</span><span class="font-medium" id="q3Done">0</span></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= PART 4: ระบบติดตามทวงถาม ================= -->
-      <section class="card !overflow-visible">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-          <div>
-            <h3 class="section-title mb-0 border-red-500 text-red-700">⚠️ รายชื่อบุคลากรที่ยังไม่รายงานผล (เพื่อติดตามทวงถาม)</h3>
-          </div>
-          <!-- ระบบ Filter (จะซ่อนตอนปรินต์ PDF) -->
-          <div id="filterSection" class="w-full md:w-64">
-            <select id="filterCourse" onchange="filterPendingTable()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500 bg-white">
-              <option value="all">แสดงทุกหลักสูตร</option>
-            </select>
-          </div>
-        </div>
-        
-        <div class="overflow-x-auto border rounded-lg table-container" id="scrollTable2" style="max-height: 400px;">
-          <table class="w-full text-sm text-left">
-            <thead class="bg-red-50 text-red-800 border-b border-red-100 sticky top-0 z-10">
-              <tr>
-                <th class="px-4 py-3">รหัสประจำตัว</th>
-                <th class="px-4 py-3">ชื่อ-นามสกุล</th>
-                <th class="px-4 py-3">หน่วยงาน</th>
-                <th class="px-4 py-3">หลักสูตรที่ค้างส่ง</th>
-              </tr>
-            </thead>
-            <tbody id="pendingTableBody" class="divide-y divide-gray-100">
-            </tbody>
-          </table>
-        </div>
-      </section>
-
+        </section>
+      </div>
+      
     </div>
   </div>
 
@@ -350,27 +356,27 @@
     function exportToPDF() {
       const element = document.getElementById('mainContent');
       
-      // 1. ปลดล็อกความสูงตารางชั่วคราวเพื่อให้ข้อมูลออกมาครบทุกบรรทัด
+      // ปลดล็อกความสูงตาราง
       const table1 = document.getElementById('scrollTable1');
       const table2 = document.getElementById('scrollTable2');
       table1.style.maxHeight = 'none';
       table2.style.maxHeight = 'none';
       
-      // 2. ซ่อนกล่อง Filter ค้นหาชั่วคราวเพราะไม่จำเป็นต้องมีใน PDF
+      // ซ่อน Filter
       document.getElementById('filterSection').style.display = 'none';
 
-      // ตั้งค่าขนาดและความคมชัดของ PDF
+      // ตั้งค่าขนาดและความคมชัดของ PDF (เปลี่ยนเป็น A4 แนวนอน - landscape)
       const opt = {
-        margin:       [0.3, 0.3, 0.3, 0.3], // ขอบหน้ากระดาษ (นิ้ว)
-        filename:     'รายงานสรุปผลการปฏิบัติหน้าที่_กกท.pdf',
-        image:        { type: 'jpeg', quality: 0.98 }, // คุณภาพรูปกราฟ
-        html2canvas:  { scale: 2, useCORS: true, windowWidth: 1200 }, // ล็อกความกว้างหน้าจอ ป้องกันการจัดเรียงพังแบบมือถือ
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' } // แนวตั้ง ขนาด A4
+        margin:       [0.3, 0.3, 0.3, 0.3], 
+        filename:     'รายงานสรุปผล_กกท.pdf',
+        image:        { type: 'jpeg', quality: 0.98 }, 
+        html2canvas:  { scale: 2, useCORS: true, windowWidth: 1400 }, // ขยายความกว้างจำลองเพื่อรองรับแนวนอน
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }, // ตั้งค่าเป็น Landscape
+        pagebreak:    { mode: ['css', 'legacy'] } // แจ้งให้ระบบประมวลผลตัวแบ่งหน้า (page-break)
       };
 
-      // เริ่มถ่ายภาพและเซฟ PDF
       html2pdf().set(opt).from(element).save().then(() => {
-        // 3. เมื่อเซฟเสร็จ คืนค่าความสูงและกรอบกลับมาให้หน้าเว็บใช้งานได้ปกติ
+        // คืนค่าตารางและ Filter
         table1.style.maxHeight = '300px';
         table2.style.maxHeight = '400px';
         document.getElementById('filterSection').style.display = 'block';
